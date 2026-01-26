@@ -1,11 +1,12 @@
 import axios from "axios";
-import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-const baseURL =
-  Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const API_URL =
+  Constants.expoConfig?.extra?.apiUrl ||
+  "https://expense-backend-tnag.onrender.com";
 
 const api = axios.create({
-  baseURL,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
