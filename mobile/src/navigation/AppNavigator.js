@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
+import ExpensesScreen from "../screens/ExpensesScreen";
+import IncomeScreen from "../screens/IncomeScreen";
 import { ActivityIndicator, View } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -24,7 +26,11 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator>
         {token ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Expenses" component={ExpensesScreen} />
+            <Stack.Screen name="Income" component={IncomeScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen

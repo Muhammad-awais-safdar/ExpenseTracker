@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/axios";
+import AuthService from "../services/authService";
 
 const AuthContext = createContext({});
 
@@ -33,8 +34,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      const response = await api.post("/api/mobile/login", { email, password });
-      const { user, token } = response.data;
+      const { user, token } = await AuthService.login(email, password);
 
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       setToken(token);
       setUser(user);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      return response.data;
+      return user;
     } catch (error) {
       console.log("Login error", error.response?.data || error.message);
       throw error;
@@ -54,13 +54,12 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, password_confirmation) => {
     setIsLoading(true);
     try {
-      const response = await api.post("/api/mobile/register", {
+      const { user, token } = await AuthService.register(
         name,
         email,
         password,
         password_confirmation,
-      });
-      const { user, token } = response.data;
+      );
 
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
@@ -68,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       setToken(token);
       setUser(user);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      return response.data;
+      return user;
     } catch (error) {
       console.log("Register error", error.response?.data || error.message);
       throw error;
@@ -80,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await api.post("/api/mobile/logout");
+      await AuthService.logout();
     } catch (e) {
       console.log("Logout error", e);
     }
