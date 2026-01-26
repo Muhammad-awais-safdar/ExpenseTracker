@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+./env_production.txt
+./RENDER_GUIDE.md
+./.gitignore
+./.env.example
