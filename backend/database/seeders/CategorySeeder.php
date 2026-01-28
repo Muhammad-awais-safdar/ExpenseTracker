@@ -16,9 +16,9 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $user = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'awais@gmail.com'],
             [
-                'name' => 'Admin User',
+                'name' => 'Awais',
                 'password' => Hash::make('password'),
             ]
         );
