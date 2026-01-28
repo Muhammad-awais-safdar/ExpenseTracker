@@ -2,6 +2,9 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
+import { ActivityIndicator, View } from "react-native";
+
+// Import all screens
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -13,7 +16,7 @@ import LoansScreen from "../screens/LoansScreen";
 import AddLoanScreen from "../screens/AddLoanScreen";
 import BudgetsScreen from "../screens/BudgetsScreen";
 import AddBudgetScreen from "../screens/AddBudgetScreen";
-import { ActivityIndicator, View } from "react-native";
+import AllTransactionsScreen from "../screens/AllTransactionsScreen"; // Import New Screen
 
 const Stack = createNativeStackNavigator();
 
@@ -23,17 +26,21 @@ export default function AppNavigator() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={{ headerShown: true }}>
         {token ? (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="Expenses" component={ExpensesScreen} />
             <Stack.Screen
               name="AddExpense"
@@ -57,6 +64,11 @@ export default function AppNavigator() {
               name="AddBudget"
               component={AddBudgetScreen}
               options={{ title: "Set Budget" }}
+            />
+            <Stack.Screen
+              name="AllTransactions"
+              component={AllTransactionsScreen}
+              options={{ title: "All Transactions" }}
             />
           </>
         ) : (

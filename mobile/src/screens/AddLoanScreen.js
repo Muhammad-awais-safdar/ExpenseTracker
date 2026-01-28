@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import LoanService from "../services/loanService";
+import MemoryCache from "../utils/memoryCache";
 
 export default function AddLoanScreen({ navigation }) {
   const [personName, setPersonName] = useState("");
@@ -32,7 +33,10 @@ export default function AddLoanScreen({ navigation }) {
         type,
         due_date: dueDate || null,
         description,
+        due_date: dueDate || null,
+        description,
       });
+      MemoryCache.clear();
       Alert.alert("Success", "Loan recorded successfully");
       navigation.goBack();
     } catch (error) {
@@ -76,7 +80,7 @@ export default function AddLoanScreen({ navigation }) {
         placeholder="John Doe"
       />
 
-      <Text style={styles.label}>Amount ($)</Text>
+      <Text style={styles.label}>Amount (PKR)</Text>
       <TextInput
         style={styles.input}
         value={amount}

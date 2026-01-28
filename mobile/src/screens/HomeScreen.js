@@ -16,6 +16,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
+import MemoryCache from "../utils/memoryCache";
+
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
@@ -23,9 +25,19 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboard = async () => {
+    // 1. Try cache first
+    const cached = MemoryCache.get("dashboard");
+    if (cached) {
+      setDashboardData(cached);
+      setLoading(false); // Show content immediately
+    }
+
     try {
+      // 2. Fetch fresh data
       const data = await DashboardService.getSummary();
       setDashboardData(data);
+      // 3. Update cache
+      MemoryCache.set("dashboard", data);
     } catch (error) {
       console.error("Dashboard fetch error:", error);
     } finally {
@@ -42,6 +54,8 @@ export default function HomeScreen({ navigation }) {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    // Force refresh bypasses strict cache reading logic if we wanted,
+    // but here standard loadDashboard works fine as it updates cache
     loadDashboard();
   }, []);
 
@@ -86,7 +100,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Total Balance</Text>
           <Text style={styles.balanceValue}>
-            ${dashboardData?.summary?.balance?.toFixed(2) || "0.00"}
+            Rs {dashboardData?.summary?.balance?.toFixed(2) || "0.00"}
           </Text>
           <View style={styles.statsRow}>
             <View style={styles.stat}>
@@ -99,7 +113,7 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="arrow-down" size={12} color="#10B981" />
               </View>
               <Text style={styles.statValue}>
-                ${dashboardData?.summary?.monthly_income?.toFixed(0)}
+                Rs {dashboardData?.summary?.monthly_income?.toFixed(0)}
               </Text>
             </View>
             <View style={styles.divider} />
@@ -113,7 +127,7 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="arrow-up" size={12} color="#EF4444" />
               </View>
               <Text style={styles.statValue}>
-                ${dashboardData?.summary?.monthly_expense?.toFixed(0)}
+                Rs {dashboardData?.summary?.monthly_expense?.toFixed(0)}
               </Text>
             </View>
           </View>
@@ -162,7 +176,9 @@ export default function HomeScreen({ navigation }) {
         {/* Recent Transactions */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Expenses")}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("AllTransactions")}
+          >
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -202,7 +218,7 @@ export default function HomeScreen({ navigation }) {
                   item.type === "expense" ? styles.negative : styles.positive,
                 ]}
               >
-                {item.type === "expense" ? "-" : "+"}${item.amount}
+                {item.type === "expense" ? "-" : "+"}Rs {item.amount}
               </Text>
             </View>
           ))

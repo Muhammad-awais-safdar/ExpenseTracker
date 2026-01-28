@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
 import ExpenseService from "../services/expenseService";
 import CategoryService from "../services/categoryService";
+import MemoryCache from "../utils/memoryCache";
 import { Ionicons } from "@expo/vector-icons";
+import CustomAlert from "../components/ui/CustomAlert";
+import ModernButton from "../components/ui/ModernButton";
 
 export default function AddExpenseScreen({ navigation }) {
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -42,7 +46,14 @@ export default function AddExpenseScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!amount || !selectedCategory) {
-      Alert.alert("Error", "Please fill all required fields");
+      setAlertConfig({
+        visible: true,
+        title: "Missing Information",
+        message: "Please enter an amount and select a category.",
+        type: "warning",
+        confirmText: "Okay",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
       return;
     }
 
@@ -54,10 +65,26 @@ export default function AddExpenseScreen({ navigation }) {
         date,
         category_id: selectedCategory,
       });
-      Alert.alert("Success", "Expense added");
-      navigation.goBack();
+      MemoryCache.clear(); // Clear cache to force refresh
+      setAlertConfig({
+        visible: true,
+        title: "Success",
+        message: "Expense recorded successfully!",
+        type: "success",
+        confirmText: "Done",
+        onConfirm: () => {
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        },
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to add expense");
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: "Failed to save expense. Please try again.",
+        type: "error",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoading(false);
     }
@@ -66,7 +93,7 @@ export default function AddExpenseScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Amount ($)</Text>
+        <Text style={styles.label}>Amount (PKR)</Text>
         <TextInput
           style={styles.input}
           value={amount}
@@ -133,17 +160,16 @@ export default function AddExpenseScreen({ navigation }) {
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.submitBtn}
+      <ModernButton
+        title="Save Expense"
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitBtnText}>Save Expense</Text>
+        loading={loading}
+        icon={(props) => (
+          <Ionicons name="checkmark-circle" size={20} color="#fff" {...props} />
         )}
-      </TouchableOpacity>
+      />
+
+      <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
@@ -177,17 +203,5 @@ const styles = StyleSheet.create({
   chipText: { color: "#374151", fontWeight: "500" },
   selectedChipText: { color: "#fff" },
 
-  submitBtn: {
-    backgroundColor: "#4F46E5",
-    padding: 18,
-    borderRadius: 16,
-    marginTop: 20,
-    alignItems: "center",
-    shadowColor: "#4F46E5",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
   submitBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });

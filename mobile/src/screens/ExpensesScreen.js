@@ -73,7 +73,7 @@ export default function ExpensesScreen({ navigation }) {
                 {new Date(item.date).toLocaleDateString()}
               </Text>
             </View>
-            <Text style={styles.amount}>-${item.amount}</Text>
+            <Text style={styles.amount}>-Rs {item.amount}</Text>
           </View>
         )}
         ListEmptyComponent={

@@ -47,7 +47,7 @@ export default function BudgetsScreen({ navigation }) {
               <Text style={styles.catName}>
                 {item.category?.name || "General"}
               </Text>
-              <Text style={styles.amt}>${item.amount}</Text>
+              <Text style={styles.amt}>Rs {item.amount}</Text>
             </View>
             <Text style={styles.period}>
               {item.period.toUpperCase()} • Ends{" "}

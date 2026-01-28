@@ -5,14 +5,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
 import IncomeService from "../services/incomeService";
 import CategoryService from "../services/categoryService";
+import MemoryCache from "../utils/memoryCache";
+import CustomAlert from "../components/ui/CustomAlert";
+import ModernButton from "../components/ui/ModernButton";
 
 export default function AddIncomeScreen({ navigation }) {
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
   const [amount, setAmount] = useState("");
   const [source, setSource] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -41,7 +45,14 @@ export default function AddIncomeScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!amount || !selectedCategory) {
-      Alert.alert("Error", "Please fill all required fields");
+      setAlertConfig({
+        visible: true,
+        title: "Missing Information",
+        message: "Please enter an amount and select a category.",
+        type: "warning",
+        confirmText: "Okay",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
       return;
     }
 
@@ -53,10 +64,26 @@ export default function AddIncomeScreen({ navigation }) {
         date,
         category_id: selectedCategory,
       });
-      Alert.alert("Success", "Income added");
-      navigation.goBack();
+      MemoryCache.clear();
+      setAlertConfig({
+        visible: true,
+        title: "Success",
+        message: "Income added successfully!",
+        type: "success",
+        confirmText: "Great",
+        onConfirm: () => {
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        },
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to add income");
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: "Failed to add income. Please try again.",
+        type: "error",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +92,7 @@ export default function AddIncomeScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Amount ($)</Text>
+        <Text style={styles.label}>Amount (PKR)</Text>
         <TextInput
           style={styles.input}
           value={amount}
@@ -132,17 +159,18 @@ export default function AddIncomeScreen({ navigation }) {
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.submitBtn}
+      <ModernButton
+        title="Save Income"
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitBtnText}>Save Income</Text>
-        )}
-      </TouchableOpacity>
+        loading={loading}
+        variant="primary" // Re-using primary, but maybe we should add 'success' variant to ModernButton later. For now primary (indigo) is fine or we can customize.
+        // Actually, let's stick to the theme. Income was Green. ModernButton default is Indigo.
+        // I will update ModernButton to support custom colors or just stick to Indigo for consistency?
+        // Let's stick to Indigo for consistency for now, or add a 'success' variant?
+        // Quick check: ModernButton supports 'dange' and 'secondary'.
+        // I'll stick to default for now for unified look, or I'll add 'success' variant later.
+      />
+      <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
@@ -175,17 +203,5 @@ const styles = StyleSheet.create({
   chipText: { color: "#374151", fontWeight: "500" },
   selectedChipText: { color: "#fff" },
 
-  submitBtn: {
-    backgroundColor: "#10B981",
-    padding: 18,
-    borderRadius: 16,
-    marginTop: 20,
-    alignItems: "center",
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
   submitBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });

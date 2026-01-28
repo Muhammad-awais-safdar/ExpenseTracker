@@ -14,17 +14,27 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, isLoading } = useAuth();
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleLogin = async () => {
-    setError("");
+    setErrors({});
+    if (!email || !password) {
+      setErrors({
+        email: !email ? ["Email is required"] : null,
+        password: !password ? ["Password is required"] : null,
+      });
+      return;
+    }
+
     try {
       await login(email, password);
     } catch (e) {
-      if (e.response && e.response.status === 401) {
-        setError("Invalid email or password");
+      if (e.response?.status === 422) {
+        setErrors(e.response.data.errors);
+      } else if (e.response?.status === 401) {
+        setErrors({ general: ["Invalid email or password"] });
       } else {
-        setError("An error occurred. Please try again.");
+        setErrors({ general: ["An error occurred. Please try again."] });
       }
     }
   };
@@ -33,21 +43,28 @@ export default function LoginScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.email && styles.inputError]}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {errors.email && <Text style={styles.fieldError}>{errors.email[0]}</Text>}
+
       <TextInput
-        style={styles.input}
+        style={[styles.input, errors.password && styles.inputError]}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
+        autoCapitalize="none"
         secureTextEntry
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {errors.password && (
+        <Text style={styles.fieldError}>{errors.password[0]}</Text>
+      )}
+
+      {errors.general && <Text style={styles.error}>{errors.general[0]}</Text>}
 
       {isLoading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -83,6 +100,15 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
+  },
+  inputError: {
+    borderColor: "red",
+  },
+  fieldError: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
+    marginTop: -5,
   },
   error: {
     color: "red",

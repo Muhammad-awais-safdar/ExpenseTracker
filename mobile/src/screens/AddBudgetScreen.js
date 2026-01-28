@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import BudgetService from "../services/budgetService";
 import CategoryService from "../services/categoryService";
+import MemoryCache from "../utils/memoryCache";
 
 export default function AddBudgetScreen({ navigation }) {
   const [amount, setAmount] = useState("");
@@ -65,7 +66,9 @@ export default function AddBudgetScreen({ navigation }) {
         period,
         start_date: startDate,
         end_date: endDate,
+        end_date: endDate,
       });
+      MemoryCache.clear();
       Alert.alert("Success", "Budget set successfully");
       navigation.goBack();
     } catch (error) {
@@ -108,7 +111,7 @@ export default function AddBudgetScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.label}>Limit Amount ($)</Text>
+      <Text style={styles.label}>Limit Amount (PKR)</Text>
       <TextInput
         style={styles.input}
         value={amount}

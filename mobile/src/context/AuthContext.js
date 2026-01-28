@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/axios";
+import api, { setUnauthorizedCallback } from "../api/axios";
 import AuthService from "../services/authService";
+import MemoryCache from "../utils/memoryCache";
 
 const AuthContext = createContext({});
 
@@ -12,7 +13,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadStorageData();
+    // Register global logout handler
+    setUnauthorizedCallback(() => {
+      // Logout without calling API again to prevent loops
+      handleSessionExpiry();
+    });
   }, []);
+
+  const handleSessionExpiry = async () => {
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
+    setToken(null);
+    setUser(null);
+    delete api.defaults.headers.common["Authorization"];
+    MemoryCache.clear();
+  };
 
   const loadStorageData = async () => {
     try {
@@ -89,6 +104,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
+    MemoryCache.clear();
     setIsLoading(false);
   };
 

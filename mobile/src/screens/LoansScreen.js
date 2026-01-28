@@ -117,7 +117,7 @@ export default function LoansScreen({ navigation }) {
                   item.type === "given" ? styles.given : styles.taken,
                 ]}
               >
-                {item.type === "given" ? "->" : "<-"} ${item.amount}
+                {item.type === "given" ? "->" : "<-"} Rs {item.amount}
               </Text>
               <Text style={styles.typeLabel}>
                 {item.type === "given" ? "You gave" : "You took"}

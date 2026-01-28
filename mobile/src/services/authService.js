@@ -2,7 +2,20 @@ import api from "../api/axios";
 
 const AuthService = {
   login: async (email, password) => {
-    const response = await api.post("/api/mobile/login", { email, password });
+    const response = await api.post(
+      "/api/mobile/login",
+      {
+        email: email.trim(),
+        password: password,
+        device_name: "mobile",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      },
+    );
     return response.data; // { user, token }
   },
   register: async (name, email, password, password_confirmation) => {
@@ -11,6 +24,7 @@ const AuthService = {
       email,
       password,
       password_confirmation,
+      device_name: "mobile",
     });
     return response.data; // { user, token }
   },

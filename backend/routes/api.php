@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\IncomeController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LoanController;
 use App\Http\Controllers\Api\BudgetController;
+use App\Http\Controllers\Api\TransactionController;
 
 Route::post('/mobile/register', [MobileAuthController::class, 'register']);
 Route::post('/mobile/login', [MobileAuthController::class, 'login']);
@@ -31,4 +32,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('loans', LoanController::class);
     Route::apiResource('budgets', BudgetController::class);
+    Route::get('/transactions', [TransactionController::class, 'index']);
 });

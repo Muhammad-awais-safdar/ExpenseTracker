@@ -43,7 +43,16 @@ class DashboardController extends Controller
         });
         
         // Merge and sort
-        $recentTransactions = $recentExpenses->merge($recentIncomes)->sortByDesc('date')->take(5)->values();
+        // Merge and sort by date then created_at
+        $recentTransactions = $recentExpenses->merge($recentIncomes)
+            ->sort(function ($a, $b) {
+                if ($a->date == $b->date) {
+                    return $b->created_at <=> $a->created_at; // Secondary sort: Created At Desc
+                }
+                return $b->date <=> $a->date; // Primary sort: Date Desc
+            })
+            ->take(5)
+            ->values();
 
         // Loans
         $loansGiven = $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
