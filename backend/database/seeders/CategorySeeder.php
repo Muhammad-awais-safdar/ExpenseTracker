@@ -23,6 +23,8 @@ class CategorySeeder extends Seeder
             ]
         );
 
+        $this->command->info('Seed completed.');
+    $this->command->info('Login with:'+ $user->email + ' /' + $user->password);
         $categories = [
             // Expense
             ['name' => 'Food', 'type' => 'expense', 'icon' => 'food', 'color' => '#FF5733'],
