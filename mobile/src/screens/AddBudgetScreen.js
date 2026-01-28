@@ -5,14 +5,17 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  StyleSheet,
   ScrollView,
 } from "react-native";
 import BudgetService from "../services/budgetService";
 import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
+import CustomAlert from "../components/ui/CustomAlert";
+import ModernButton from "../components/ui/ModernButton";
 
 export default function AddBudgetScreen({ navigation }) {
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
   const [amount, setAmount] = useState("");
   const [period, setPeriod] = useState("monthly"); // monthly, yearly
   const [startDate, setStartDate] = useState(
@@ -54,7 +57,14 @@ export default function AddBudgetScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!amount || !selectedCategory) {
-      Alert.alert("Error", "Please fill required fields");
+      setAlertConfig({
+        visible: true,
+        title: "Missing Data",
+        message: "Please select a category and enter a limit amount.",
+        type: "warning",
+        confirmText: "Okay",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
       return;
     }
 
@@ -66,14 +76,28 @@ export default function AddBudgetScreen({ navigation }) {
         period,
         start_date: startDate,
         end_date: endDate,
-        end_date: endDate,
       });
       MemoryCache.clear();
-      Alert.alert("Success", "Budget set successfully");
-      navigation.goBack();
+      setAlertConfig({
+        visible: true,
+        title: "Budget Set",
+        message: "Your budget has been successfully created.",
+        type: "success",
+        confirmText: "Excellent",
+        onConfirm: () => {
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        },
+      });
     } catch (error) {
       console.log(error.response?.data);
-      Alert.alert("Error", "Failed to add budget");
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: "Failed to set budget. Please try again.",
+        type: "error",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoading(false);
     }
@@ -158,15 +182,13 @@ export default function AddBudgetScreen({ navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.submitBtn}
+      <ModernButton
+        title="Set Budget"
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        <Text style={styles.submitBtnText}>
-          {loading ? "Saving..." : "Set Budget"}
-        </Text>
-      </TouchableOpacity>
+        loading={loading}
+      />
+
+      <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }

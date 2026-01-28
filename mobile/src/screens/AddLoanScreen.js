@@ -5,13 +5,17 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  StyleSheet,
   ScrollView,
 } from "react-native";
 import LoanService from "../services/loanService";
 import MemoryCache from "../utils/memoryCache";
+import CustomAlert from "../components/ui/CustomAlert";
+import ModernButton from "../components/ui/ModernButton";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AddLoanScreen({ navigation }) {
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
   const [personName, setPersonName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("given"); // given, taken
@@ -21,7 +25,14 @@ export default function AddLoanScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!personName || !amount) {
-      Alert.alert("Error", "Please fill required fields (Name, Amount)");
+      setAlertConfig({
+        visible: true,
+        title: "Missing Details",
+        message: "Please enter the person's name and amount.",
+        type: "warning",
+        confirmText: "Okay",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
       return;
     }
 
@@ -33,14 +44,27 @@ export default function AddLoanScreen({ navigation }) {
         type,
         due_date: dueDate || null,
         description,
-        due_date: dueDate || null,
-        description,
       });
       MemoryCache.clear();
-      Alert.alert("Success", "Loan recorded successfully");
-      navigation.goBack();
+      setAlertConfig({
+        visible: true,
+        title: "Loan Recorded",
+        message: "The loan has been saved successfully.",
+        type: "success",
+        confirmText: "Done",
+        onConfirm: () => {
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        },
+      });
     } catch (error) {
-      Alert.alert("Error", "Failed to add loan");
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: "Failed to record loan. Please check your connection.",
+        type: "error",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoading(false);
     }
@@ -105,15 +129,17 @@ export default function AddLoanScreen({ navigation }) {
         placeholder="Reason for loan"
       />
 
-      <TouchableOpacity
-        style={styles.submitBtn}
+      <ModernButton
+        title="Save Loan"
         onPress={handleSubmit}
-        disabled={loading}
-      >
-        <Text style={styles.submitBtnText}>
-          {loading ? "Saving..." : "Save Loan"}
-        </Text>
-      </TouchableOpacity>
+        loading={loading}
+        variant={type === "given" ? "danger" : "primary"} // Red for money leaving (given), Blue/Green for taken? Or just Primary/Indigo.
+        // Let's stick to Primary or logic. If I gave loan, money left me (Expense-ish). If I took, money came (Income-ish).
+        // For consistency let's use default primary, or maybe customized.
+        // Let's use Primary to keep it clean.
+      />
+
+      <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
