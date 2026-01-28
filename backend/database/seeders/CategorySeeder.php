@@ -32,8 +32,8 @@ class CategorySeeder extends Seeder
             ['name' => 'Utilities', 'type' => 'expense', 'icon' => 'bolt', 'color' => '#3357FF'],
             ['name' => 'Entertainment', 'type' => 'expense', 'icon' => 'film', 'color' => '#F3FF33'],
             ['name' => 'Health', 'type' => 'expense', 'icon' => 'medkit', 'color' => '#FF33F3'],
-            ['name' => 'Shopping', 'type' => 'shopping', 'icon' => 'cart', 'color' => '#25b917'],
-            ['name' => 'Loan', 'type' => 'loan', 'icon' => 'hand-holding-usd', 'color' => '#e7c429ff'],
+            ['name' => 'Shopping', 'type' => 'expense', 'icon' => 'cart', 'color' => '#25b917'],
+            ['name' => 'Loan', 'type' => 'expense', 'icon' => 'hand-holding-usd', 'color' => '#e7c429ff'],
 
             
             // Income
