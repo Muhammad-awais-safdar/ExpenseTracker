@@ -47,8 +47,29 @@ export default function BudgetsScreen({ navigation }) {
               <Text style={styles.catName}>
                 {item.category?.name || "General"}
               </Text>
-              <Text style={styles.amt}>Rs {item.amount}</Text>
+              <Text style={styles.amt}>{Math.round(item.percentage)}%</Text>
             </View>
+
+            <View style={styles.progressContainer}>
+              <View
+                style={[
+                  styles.progressBar,
+                  {
+                    width: `${item.percentage}%`,
+                    backgroundColor: item.category?.color || "#4F46E5",
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.usedText}>
+                Used:{" "}
+                <Text style={{ fontWeight: "bold" }}>Rs {item.spent}</Text>
+              </Text>
+              <Text style={styles.totalText}>Total: Rs {item.amount}</Text>
+            </View>
+
             <Text style={styles.period}>
               {item.period.toUpperCase()} • Ends{" "}
               {new Date(item.end_date).toLocaleDateString()}
@@ -85,7 +106,26 @@ const styles = StyleSheet.create({
   },
   catName: { fontSize: 18, fontWeight: "bold" },
   amt: { fontSize: 18, fontWeight: "bold", color: "#4F46E5" },
-  period: { color: "#666", fontSize: 12 },
+  period: { color: "#666", fontSize: 12, marginTop: 10 },
+
+  progressContainer: {
+    height: 8,
+    backgroundColor: "#E5E7EB", // Gray-200
+    borderRadius: 4,
+    marginVertical: 10,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+  },
+  usedText: { fontSize: 14, color: "#6B7280" },
+  totalText: { fontSize: 14, color: "#111827", fontWeight: "bold" },
 
   empty: { textAlign: "center", marginTop: 50, color: "#888" },
   fab: {

@@ -1,6 +1,11 @@
-import { Text, ActivityIndicator, StyleSheet, Pressable } from "react-native";
+import {
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  Pressable,
+  View,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { MotiView } from "moti";
 
 export default function ModernButton({
   title,
@@ -27,34 +32,31 @@ export default function ModernButton({
     <Pressable
       onPress={onPress}
       disabled={loading || disabled}
-      style={({ pressed }) => [style.container, pressed && { opacity: 0.9 }]}
+      style={({ pressed }) => [
+        styles.container,
+        pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+      ]}
     >
-      <MotiView
-        from={{ scale: 1 }}
-        animate={{ scale: loading ? 0.95 : 1 }}
-        transition={{ type: "spring" }}
+      <LinearGradient
+        colors={getColors()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.gradient,
+          variant === "secondary" && styles.secondaryBorder,
+        ]}
       >
-        <LinearGradient
-          colors={getColors()}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.gradient,
-            variant === "secondary" && styles.secondaryBorder,
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator color={getTextColor()} />
-          ) : (
-            <>
-              {Icon && <Icon style={{ marginRight: 8 }} />}
-              <Text style={[styles.text, { color: getTextColor() }]}>
-                {title}
-              </Text>
-            </>
-          )}
-        </LinearGradient>
-      </MotiView>
+        {loading ? (
+          <ActivityIndicator color={getTextColor()} />
+        ) : (
+          <>
+            {Icon && <Icon style={{ marginRight: 8 }} />}
+            <Text style={[styles.text, { color: getTextColor() }]}>
+              {title}
+            </Text>
+          </>
+        )}
+      </LinearGradient>
     </Pressable>
   );
 }

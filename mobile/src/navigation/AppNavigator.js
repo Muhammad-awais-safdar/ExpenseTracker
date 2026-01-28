@@ -21,9 +21,9 @@ import AllTransactionsScreen from "../screens/AllTransactionsScreen"; // Import 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const { token, isLoading } = useAuth();
+  const { token, isSplashLoading } = useAuth();
 
-  if (isLoading) {
+  if (isSplashLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#4F46E5" />

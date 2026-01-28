@@ -4,6 +4,7 @@ const API_URL = process.env.API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -13,9 +14,6 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
-    // console.log(`[API REQUEST] ${config.method.toUpperCase()} ${config.url}`);
-    // console.log("[API HEADERS]", config.headers);
-    // console.log("[API DATA]", config.data);
     return config;
   },
   (error) => {
@@ -34,27 +32,23 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
-    // console.log(`[API RESPONSE] ${response.status} ${response.config.url}`);
-    // console.log("[API RESPONSE DATA]", response.data);
     return response;
   },
   (error) => {
     if (error.response) {
-      // console.error(
-      //   `[API ERROR] ${error.response.status} ${error.response.config.url}`,
-      // );
       // Handle 401 Unauthorized globally
       if (error.response.status === 401 && onUnauthorized) {
-        // console.log("Session expired, triggering logout...");
-        onUnauthorized();
-        // Return a pending promise to halt chain execution while logout happens
-        return new Promise(() => {});
-      }
+        // Prevent global logout loop when explicitly logging in/registering
+        const isAuthRequest =
+          error.config.url.includes("/login") ||
+          error.config.url.includes("/register");
 
-      // console.error("[API ERROR DATA]", error.response.data);
-    } else {
-      // console.error("[API ERROR]", error.message);
+        if (!isAuthRequest) {
+          onUnauthorized();
+        }
+      }
     }
+    // Always reject so the caller logic (LoginScreen) handles the error state (stops loading)
     return Promise.reject(error);
   },
 );

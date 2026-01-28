@@ -14,10 +14,16 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+
+        // Active Loans (for display only)
+        $loansGiven = $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
+        $loansTaken = $user->loans()->where('type', 'taken')->where('status', 'pending')->sum('amount');
         
         // Total Income & Expense (All time)
         $totalIncome = $user->incomes()->sum('amount');
         $totalExpense = $user->expenses()->sum('amount');
+        
+        // Balance = Income - Expense (Loans now generate transactions, so they are included via that)
         $balance = $totalIncome - $totalExpense;
 
         // Monthly Stats (Current Month)
@@ -43,7 +49,6 @@ class DashboardController extends Controller
         });
         
         // Merge and sort
-        // Merge and sort by date then created_at
         $recentTransactions = $recentExpenses->merge($recentIncomes)
             ->sort(function ($a, $b) {
                 if ($a->date == $b->date) {
@@ -53,10 +58,6 @@ class DashboardController extends Controller
             })
             ->take(5)
             ->values();
-
-        // Loans
-        $loansGiven = $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
-        $loansTaken = $user->loans()->where('type', 'taken')->where('status', 'pending')->sum('amount');
 
         return response()->json([
             'summary' => [

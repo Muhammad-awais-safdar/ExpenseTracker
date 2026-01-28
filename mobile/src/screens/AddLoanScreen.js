@@ -5,13 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StyleSheet,
   ScrollView,
 } from "react-native";
 import LoanService from "../services/loanService";
 import MemoryCache from "../utils/memoryCache";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
+import CustomDatePicker from "../components/ui/CustomDatePicker";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function AddLoanScreen({ navigation }) {
@@ -113,12 +113,10 @@ export default function AddLoanScreen({ navigation }) {
         placeholder="0.00"
       />
 
-      <Text style={styles.label}>Due Date (Optional YYYY-MM-DD)</Text>
-      <TextInput
-        style={styles.input}
+      <CustomDatePicker
+        label="Due Date (Optional)"
         value={dueDate}
-        onChangeText={setDueDate}
-        placeholder="2023-12-31"
+        onChange={setDueDate}
       />
 
       <Text style={styles.label}>Description (Optional)</Text>

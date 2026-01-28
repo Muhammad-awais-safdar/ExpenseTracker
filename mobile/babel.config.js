@@ -4,7 +4,6 @@ module.exports = function (api) {
     presets: ["babel-preset-expo"],
     plugins: [
       ["transform-inline-environment-variables", { include: ["API_URL"] }],
-      "react-native-reanimated/plugin",
     ],
   };
 };

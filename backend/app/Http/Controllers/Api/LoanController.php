@@ -26,6 +26,25 @@ class LoanController extends Controller
 
         $loan = $request->user()->loans()->create($validated);
 
+        // Create immediate transaction reflecting cash flow
+        if ($loan->type === 'taken') {
+            // Money In -> Income
+            $request->user()->incomes()->create([
+                'amount' => $loan->amount,
+                'source' => 'Loan Taken: ' . $loan->person_name,
+                'date' => now(),
+                'category_id' => null
+            ]);
+        } else {
+            // Money Out -> Expense
+            $request->user()->expenses()->create([
+                'amount' => $loan->amount,
+                'description' => 'Loan Given: ' . $loan->person_name,
+                'date' => now(),
+                'category_id' => null
+            ]);
+        }
+
         return response()->json($loan, 201);
     }
 
@@ -39,6 +58,11 @@ class LoanController extends Controller
 
     public function update(Request $request, Loan $loan)
     {
+        \Illuminate\Support\Facades\Log::info('Update Loan Request', [
+            'loan_id' => $loan->id,
+            'input' => $request->all()
+        ]);
+
         if ($loan->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -52,7 +76,37 @@ class LoanController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        \Illuminate\Support\Facades\Log::info('Validated Data', $validated);
+
+        // Check if status is changing to 'paid'
+        $wasPending = $loan->status === 'pending';
+        $isNowPaid = isset($validated['status']) && $validated['status'] === 'paid';
+
         $loan->update($validated);
+        
+        if ($wasPending && $isNowPaid) {
+            \Illuminate\Support\Facades\Log::info('Loan Settled - Creating Transaction');
+            
+            if ($loan->type === 'given') {
+                // I lent money, now getting it back -> Income
+                $request->user()->incomes()->create([
+                    'amount' => $loan->amount,
+                    'source' => 'Loan Repayment: ' . $loan->person_name,
+                    'date' => now(),
+                    'category_id' => null // Or create a specific category if needed
+                ]);
+            } else {
+                // I borrowed money, now paying it back -> Expense
+                $request->user()->expenses()->create([
+                    'amount' => $loan->amount,
+                    'description' => 'Loan Repayment: ' . $loan->person_name,
+                    'date' => now(),
+                    'category_id' => null
+                ]);
+            }
+        }
+        
+        \Illuminate\Support\Facades\Log::info('Loan Updated', $loan->fresh()->toArray());
 
         return $loan;
     }

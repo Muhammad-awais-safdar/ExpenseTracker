@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
   StatusBar,
   Platform,
+  Animated,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import DashboardService from "../services/dashboardService";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-
 import MemoryCache from "../utils/memoryCache";
 
 export default function HomeScreen({ navigation }) {
@@ -24,19 +24,20 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Animation values
+  const balanceAnim = useRef(new Animated.Value(0)).current;
+  const contentAnim = useRef(new Animated.Value(50)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+
   const loadDashboard = async () => {
-    // 1. Try cache first
     const cached = MemoryCache.get("dashboard");
     if (cached) {
       setDashboardData(cached);
-      setLoading(false); // Show content immediately
+      setLoading(false);
     }
-
     try {
-      // 2. Fetch fresh data
       const data = await DashboardService.getSummary();
       setDashboardData(data);
-      // 3. Update cache
       MemoryCache.set("dashboard", data);
     } catch (error) {
       console.error("Dashboard fetch error:", error);
@@ -49,13 +50,31 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       loadDashboard();
+
+      Animated.parallel([
+        Animated.timing(balanceAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.stagger(100, [
+          Animated.timing(contentOpacity, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.spring(contentAnim, {
+            toValue: 0,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
     }, []),
   );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Force refresh bypasses strict cache reading logic if we wanted,
-    // but here standard loadDashboard works fine as it updates cache
     loadDashboard();
   }, []);
 
@@ -68,15 +87,17 @@ export default function HomeScreen({ navigation }) {
   }
 
   const QuickAction = ({ title, icon, color, route }) => (
-    <TouchableOpacity
-      style={styles.actionBtn}
-      onPress={() => navigation.navigate(route)}
-    >
-      <View style={[styles.actionIcon, { backgroundColor: color + "20" }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <Text style={styles.actionBtnText}>{title}</Text>
-    </TouchableOpacity>
+    <View style={styles.actionBtnWrapper}>
+      <TouchableOpacity
+        style={styles.actionBtn}
+        onPress={() => navigation.navigate(route)}
+      >
+        <View style={[styles.actionIcon, { backgroundColor: color + "20" }]}>
+          <Ionicons name={icon} size={24} color={color} />
+        </View>
+        <Text style={styles.actionBtnText}>{title}</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -97,7 +118,22 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Balance Card */}
-        <View style={styles.balanceCard}>
+        <Animated.View
+          style={[
+            styles.balanceCard,
+            {
+              opacity: balanceAnim,
+              transform: [
+                {
+                  scale: balanceAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.95, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <Text style={styles.balanceLabel}>Total Balance</Text>
           <Text style={styles.balanceValue}>
             Rs {dashboardData?.summary?.balance?.toFixed(2) || "0.00"}
@@ -131,7 +167,7 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
       </LinearGradient>
 
       <ScrollView
@@ -145,86 +181,95 @@ export default function HomeScreen({ navigation }) {
           />
         }
       >
-        {/* Actions Grid */}
-        <View style={styles.actionsGrid}>
-          <QuickAction
-            title="Add Expense"
-            icon="remove-circle"
-            color="#EF4444"
-            route="AddExpense"
-          />
-          <QuickAction
-            title="Add Income"
-            icon="add-circle"
-            color="#10B981"
-            route="AddIncome"
-          />
-          <QuickAction
-            title="Loans"
-            icon="swap-horizontal"
-            color="#F59E0B"
-            route="Loans"
-          />
-          <QuickAction
-            title="Budgets"
-            icon="pie-chart"
-            color="#8B5CF6"
-            route="Budgets"
-          />
-        </View>
+        <Animated.View
+          style={{
+            opacity: contentOpacity,
+            transform: [{ translateY: contentAnim }],
+          }}
+        >
+          {/* Actions Grid */}
+          <View style={styles.actionsGrid}>
+            <QuickAction
+              title="Add Expense"
+              icon="remove-circle"
+              color="#EF4444"
+              route="AddExpense"
+            />
+            <QuickAction
+              title="Add Income"
+              icon="add-circle"
+              color="#10B981"
+              route="AddIncome"
+            />
+            <QuickAction
+              title="Loans"
+              icon="swap-horizontal"
+              color="#F59E0B"
+              route="Loans"
+            />
+            <QuickAction
+              title="Budgets"
+              icon="pie-chart"
+              color="#8B5CF6"
+              route="Budgets"
+            />
+          </View>
 
-        {/* Recent Transactions */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("AllTransactions")}
-          >
-            <Text style={styles.seeAll}>See All</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Recent Transactions */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AllTransactions")}
+            >
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View>
 
-        {dashboardData?.recent_transactions?.length > 0 ? (
-          dashboardData.recent_transactions.map((item, index) => (
-            <View key={index} style={styles.transactionItem}>
-              <View
-                style={[
-                  styles.iconBox,
-                  {
-                    backgroundColor:
-                      item.type === "expense" ? "#FEE2E2" : "#D1FAE5",
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    item.type === "expense" ? "cart-outline" : "wallet-outline"
-                  }
-                  size={20}
-                  color={item.type === "expense" ? "#EF4444" : "#10B981"}
-                />
-              </View>
-              <View style={styles.transactionInfo}>
-                <Text style={styles.tTitle}>
-                  {item.category?.name ||
-                    (item.type === "income" ? item.source : item.description)}
+          {dashboardData?.recent_transactions?.length > 0 ? (
+            dashboardData.recent_transactions.map((item, index) => (
+              <View key={index} style={styles.transactionItem}>
+                <View
+                  style={[
+                    styles.iconBox,
+                    {
+                      backgroundColor:
+                        item.type === "expense" ? "#FEE2E2" : "#D1FAE5",
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      item.type === "expense"
+                        ? "cart-outline"
+                        : "wallet-outline"
+                    }
+                    size={20}
+                    color={item.type === "expense" ? "#EF4444" : "#10B981"}
+                  />
+                </View>
+                <View style={styles.transactionInfo}>
+                  <Text style={styles.tTitle}>
+                    {item.category?.name ||
+                      (item.type === "income" ? item.source : item.description)}
+                  </Text>
+                  <Text style={styles.tDate}>
+                    {new Date(item.date).toLocaleDateString()}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.tAmount,
+                    item.type === "expense" ? styles.negative : styles.positive,
+                  ]}
+                >
+                  {item.type === "expense" ? "-" : "+"}Rs {item.amount}
                 </Text>
-                <Text style={styles.tDate}>
-                  {new Date(item.date).toLocaleDateString()}
-                </Text>
               </View>
-              <Text
-                style={[
-                  styles.tAmount,
-                  item.type === "expense" ? styles.negative : styles.positive,
-                ]}
-              >
-                {item.type === "expense" ? "-" : "+"}Rs {item.amount}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>No recent transactions</Text>
-        )}
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No recent transactions</Text>
+          )}
+        </Animated.View>
       </ScrollView>
     </View>
   );
@@ -288,12 +333,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 25,
   },
-  actionBtn: {
+  actionBtnWrapper: {
     width: "48%",
+    marginBottom: 15,
+  },
+  actionBtn: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 16,
-    marginBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#000",
@@ -301,6 +348,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
+    width: "100%", // Fill wrapper
   },
   actionIcon: { padding: 8, borderRadius: 10, marginRight: 10 },
   actionBtnText: { fontWeight: "600", color: "#1F2937", fontSize: 14 },

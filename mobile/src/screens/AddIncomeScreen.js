@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
@@ -14,6 +13,7 @@ import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
+import CustomDatePicker from "../components/ui/CustomDatePicker";
 
 export default function AddIncomeScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -115,16 +115,7 @@ export default function AddIncomeScreen({ navigation }) {
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-        <TextInput
-          style={styles.input}
-          value={date}
-          onChangeText={setDate}
-          placeholder="2023-01-01"
-          placeholderTextColor="#9CA3AF"
-        />
-      </View>
+      <CustomDatePicker label="Date" value={date} onChange={setDate} />
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Category</Text>

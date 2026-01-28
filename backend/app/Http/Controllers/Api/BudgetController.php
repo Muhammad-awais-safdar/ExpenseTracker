@@ -10,7 +10,21 @@ class BudgetController extends Controller
 {
     public function index(Request $request)
     {
-        return $request->user()->budgets()->with('category')->latest()->get();
+        $budgets = $request->user()->budgets()->with('category')->latest()->get();
+
+        // Calculate usage for each budget
+        $budgets = $budgets->map(function ($budget) use ($request) {
+            $spent = $request->user()->expenses()
+                ->where('category_id', $budget->category_id)
+                ->whereBetween('date', [$budget->start_date, $budget->end_date])
+                ->sum('amount');
+            
+            $budget->spent = $spent;
+            $budget->percentage = $budget->amount > 0 ? min(100, round(($spent / $budget->amount) * 100)) : 0;
+            return $budget;
+        });
+
+        return $budgets;
     }
 
     public function store(Request $request)

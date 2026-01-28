@@ -9,13 +9,11 @@ const AuthContext = createContext({});
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSplashLoading, setIsSplashLoading] = useState(true);
 
   useEffect(() => {
     loadStorageData();
-    // Register global logout handler
     setUnauthorizedCallback(() => {
-      // Logout without calling API again to prevent loops
       handleSessionExpiry();
     });
   }, []);
@@ -42,12 +40,12 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       console.log("Failed to load auth data", e);
     } finally {
-      setIsLoading(false);
+      setIsSplashLoading(false);
     }
   };
 
   const login = async (email, password) => {
-    setIsLoading(true);
+    // Local loading is handled by the component
     try {
       const { user, token } = await AuthService.login(email, password);
 
@@ -61,13 +59,10 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log("Login error", error.response?.data || error.message);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const register = async (name, email, password, password_confirmation) => {
-    setIsLoading(true);
     try {
       const { user, token } = await AuthService.register(
         name,
@@ -86,13 +81,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log("Register error", error.response?.data || error.message);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
+    // Only logout logic
     try {
       await AuthService.logout();
     } catch (e) {
@@ -105,12 +98,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
     MemoryCache.clear();
-    setIsLoading(false);
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout }}
+      value={{ user, token, isSplashLoading, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>

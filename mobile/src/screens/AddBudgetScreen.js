@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  StyleSheet,
   ScrollView,
 } from "react-native";
 import BudgetService from "../services/budgetService";
@@ -13,6 +12,7 @@ import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
+import CustomDatePicker from "../components/ui/CustomDatePicker";
 
 export default function AddBudgetScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -173,12 +173,22 @@ export default function AddBudgetScreen({ navigation }) {
 
       <View style={styles.dateRow}>
         <View style={{ flex: 1, marginRight: 5 }}>
-          <Text style={styles.label}>Start Date</Text>
-          <TextInput style={styles.input} value={startDate} editable={false} />
+          <CustomDatePicker
+            label="Start Date"
+            value={startDate}
+            onChange={(d) => {
+              setStartDate(d);
+              calculateEndDate(period, d);
+            }}
+          />
         </View>
         <View style={{ flex: 1, marginLeft: 5 }}>
           <Text style={styles.label}>End Date</Text>
-          <TextInput style={styles.input} value={endDate} editable={false} />
+          <TextInput
+            style={[styles.input, { backgroundColor: "#F3F4F6" }]}
+            value={endDate}
+            editable={false}
+          />
         </View>
       </View>
 

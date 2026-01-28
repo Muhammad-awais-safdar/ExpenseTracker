@@ -10,11 +10,13 @@ import {
 } from "react-native";
 import LoanService from "../services/loanService";
 import { useFocusEffect } from "@react-navigation/native";
+import CustomAlert from "../components/ui/CustomAlert";
 
 export default function LoansScreen({ navigation }) {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, given, taken
+  const [filter, setFilter] = useState("all");
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
 
   const loadLoans = async () => {
     try {
@@ -122,6 +124,53 @@ export default function LoansScreen({ navigation }) {
               <Text style={styles.typeLabel}>
                 {item.type === "given" ? "You gave" : "You took"}
               </Text>
+
+              {item.status === "pending" && (
+                <TouchableOpacity
+                  style={[
+                    styles.payBtn,
+                    {
+                      backgroundColor:
+                        item.type === "given" ? "#10B981" : "#4F46E5",
+                    },
+                  ]}
+                  onPress={() => {
+                    console.log(
+                      "[LoansScreen] Mark Paid Button Pressed for ID:",
+                      item.id,
+                    );
+                    setAlertConfig({
+                      visible: true,
+                      title: "Settle Loan",
+                      message: `Mark this loan with ${item.person_name} as Paid?`,
+                      type: "info",
+                      confirmText: "Yes, Settle",
+                      cancelText: "No",
+                      onCancel: () => setAlertConfig({ visible: false }),
+                      onConfirm: async () => {
+                        console.log("[LoansScreen] User confirmed settlement");
+                        setAlertConfig({ visible: false });
+                        setLoading(true);
+                        try {
+                          console.log("[LoansScreen] Sending API request...");
+                          const result = await LoanService.update(item.id, {
+                            status: "paid",
+                          }); // Send only status, strict
+                          console.log("[LoansScreen] API Success:", result);
+                          await loadLoans(); // Await reload
+                        } catch (e) {
+                          console.error("[LoansScreen] API Failed:", e);
+                          alert("Failed to update loan");
+                        } finally {
+                          setLoading(false);
+                        }
+                      },
+                    });
+                  }}
+                >
+                  <Text style={styles.payBtnText}>Mark Paid</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -134,6 +183,8 @@ export default function LoansScreen({ navigation }) {
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+
+      <CustomAlert {...alertConfig} />
     </View>
   );
 }
@@ -198,4 +249,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   fabText: { color: "#fff", fontSize: 30, fontWeight: "bold", marginTop: -2 },
+
+  payBtn: {
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  payBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
 });

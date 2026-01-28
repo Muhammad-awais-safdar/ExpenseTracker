@@ -1,6 +1,12 @@
-import React from "react";
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { MotiView } from "moti";
+import React, { useEffect, useRef } from "react";
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function CustomAlert({
@@ -13,6 +19,29 @@ export default function CustomAlert({
   cancelText = "Cancel",
   type = "info", // success, error, info, warning
 }) {
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      scaleAnim.setValue(0.9);
+      opacityAnim.setValue(0);
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
   if (!visible) return null;
 
   const getColors = () => {
@@ -33,11 +62,14 @@ export default function CustomAlert({
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
-        <MotiView
-          from={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", damping: 15 }}
-          style={styles.container}
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              opacity: opacityAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
         >
           <View style={[styles.iconBox, { backgroundColor: theme.bg }]}>
             <Ionicons name={theme.name} size={32} color={theme.icon} />
@@ -60,7 +92,7 @@ export default function CustomAlert({
               <Text style={styles.confirmText}>{confirmText}</Text>
             </TouchableOpacity>
           </View>
-        </MotiView>
+        </Animated.View>
       </View>
     </Modal>
   );

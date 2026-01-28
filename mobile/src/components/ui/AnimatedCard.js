@@ -1,6 +1,5 @@
-import React from "react";
-import { Pressable, StyleSheet } from "react-native";
-import { MotiView } from "moti";
+import React, { useEffect, useRef } from "react";
+import { Pressable, StyleSheet, Animated } from "react-native";
 
 export default function AnimatedCard({
   children,
@@ -9,17 +8,45 @@ export default function AnimatedCard({
   delay = 0,
   noPadding,
 }) {
-  return (
-    <MotiView
-      from={{ opacity: 0, scale: 0.9, translateY: 20 }}
-      animate={{ opacity: 1, scale: 1, translateY: 0 }}
-      transition={{
-        type: "spring",
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
         delay: delay,
-        damping: 15,
-        stiffness: 100,
-      }}
-      style={[styles.container, style]}
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 6,
+        tension: 40,
+        delay: delay,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 40,
+        delay: delay,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [delay]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.container,
+        style,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+        },
+      ]}
     >
       <Pressable
         onPress={onPress}
@@ -31,7 +58,7 @@ export default function AnimatedCard({
       >
         {children}
       </Pressable>
-    </MotiView>
+    </Animated.View>
   );
 }
 

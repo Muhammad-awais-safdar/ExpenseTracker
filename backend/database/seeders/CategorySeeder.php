@@ -32,12 +32,18 @@ class CategorySeeder extends Seeder
             ['name' => 'Utilities', 'type' => 'expense', 'icon' => 'bolt', 'color' => '#3357FF'],
             ['name' => 'Entertainment', 'type' => 'expense', 'icon' => 'film', 'color' => '#F3FF33'],
             ['name' => 'Health', 'type' => 'expense', 'icon' => 'medkit', 'color' => '#FF33F3'],
+            ['name' => 'Shopping', 'type' => 'shopping', 'icon' => 'cart', 'color' => '#25b917'],
+            ['name' => 'Loan', 'type' => 'loan', 'icon' => 'hand-holding-usd', 'color' => '#e7c429ff'],
+
             
             // Income
             ['name' => 'Salary', 'type' => 'income', 'icon' => 'money', 'color' => '#33FFF3'],
             ['name' => 'Freelance', 'type' => 'income', 'icon' => 'laptop', 'color' => '#33FF33'],
             ['name' => 'Investments', 'type' => 'income', 'icon' => 'chart-line', 'color' => '#FF3333'],
+            ['name' => 'Gift', 'type' => 'income', 'icon' => 'gift', 'color' => '#FF3333'],
+            ['name' => 'Loan', 'type' => 'income', 'icon' => 'hand-holding-usd', 'color' => '#e7c429ff'],
         ];
+
 
         foreach ($categories as $category) {
             Category::firstOrCreate(

@@ -15,7 +15,7 @@ chmod 777 /var/www/database/database.sqlite
 chmod -R 777 /var/www/storage
 
 echo "📂 Running migrations..."
-php artisan migrate:fresh --force --seed
+php artisan migrate --force --seed
 
 echo "🔥 Optimizing..."
 php artisan config:cache
