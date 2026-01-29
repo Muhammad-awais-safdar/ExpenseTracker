@@ -3,6 +3,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api, { setUnauthorizedCallback } from "../api/axios";
 import AuthService from "../services/authService";
 import MemoryCache from "../utils/memoryCache";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const AuthContext = createContext({});
 
@@ -10,13 +13,22 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isSplashLoading, setIsSplashLoading] = useState(true);
+  const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   useEffect(() => {
     loadStorageData();
+    checkBiometricSupport();
     setUnauthorizedCallback(() => {
       handleSessionExpiry();
     });
   }, []);
+
+  const checkBiometricSupport = async () => {
+    const compatible = await LocalAuthentication.hasHardwareAsync();
+    const enrolled = await LocalAuthentication.isEnrolledAsync();
+    setIsBiometricSupported(compatible && enrolled);
+  };
 
   const handleSessionExpiry = async () => {
     await AsyncStorage.removeItem("token");
@@ -31,6 +43,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedToken = await AsyncStorage.getItem("token");
       const storedUser = await AsyncStorage.getItem("user");
+      const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
+
+      if (bioEnabled === "true") {
+        setIsBiometricEnabled(true);
+      }
 
       if (storedToken && storedUser) {
         setToken(storedToken);
@@ -41,6 +58,54 @@ export const AuthProvider = ({ children }) => {
       console.log("Failed to load auth data", e);
     } finally {
       setIsSplashLoading(false);
+    }
+  };
+
+  const enableBiometrics = async (email, password) => {
+    try {
+      if (!isBiometricSupported)
+        throw new Error("Biometrics not supported or enrolled");
+
+      await SecureStore.setItemAsync("bio_email", email);
+      await SecureStore.setItemAsync("bio_password", password);
+      await AsyncStorage.setItem("biometric_enabled", "true");
+      setIsBiometricEnabled(true);
+      return true;
+    } catch (e) {
+      console.log("Error enabling biometrics", e);
+      throw e;
+    }
+  };
+
+  const disableBiometrics = async () => {
+    await SecureStore.deleteItemAsync("bio_email");
+    await SecureStore.deleteItemAsync("bio_password");
+    await AsyncStorage.setItem("biometric_enabled", "false");
+    setIsBiometricEnabled(false);
+  };
+
+  const loginWithBiometrics = async () => {
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Login with Biometrics",
+        disableDeviceFallback: false,
+      });
+
+      if (result.success) {
+        const email = await SecureStore.getItemAsync("bio_email");
+        const password = await SecureStore.getItemAsync("bio_password");
+
+        if (email && password) {
+          return await login(email, password);
+        } else {
+          throw new Error("No credentials stored");
+        }
+      } else {
+        throw new Error("Biometric authentication failed");
+      }
+    } catch (e) {
+      console.log("Biometric login error", e);
+      throw e;
     }
   };
 
@@ -102,7 +167,19 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isSplashLoading, login, register, logout }}
+      value={{
+        user,
+        token,
+        isSplashLoading,
+        login,
+        register,
+        logout,
+        isBiometricSupported,
+        isBiometricEnabled,
+        enableBiometrics,
+        disableBiometrics,
+        loginWithBiometrics,
+      }}
     >
       {children}
     </AuthContext.Provider>

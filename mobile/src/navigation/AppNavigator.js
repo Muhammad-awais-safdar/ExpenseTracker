@@ -17,23 +17,60 @@ import AddLoanScreen from "../screens/AddLoanScreen";
 import BudgetsScreen from "../screens/BudgetsScreen";
 import AddBudgetScreen from "../screens/AddBudgetScreen";
 import AllTransactionsScreen from "../screens/AllTransactionsScreen"; // Import New Screen
+import SettingsScreen from "../screens/SettingsScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+import ChangePasswordScreen from "../screens/ChangePasswordScreen";
+import RecurringTransactionsScreen from "../screens/RecurringTransactionsScreen";
+import AddRecurringScreen from "../screens/AddRecurringScreen";
 
 const Stack = createNativeStackNavigator();
 
-export default function AppNavigator() {
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { DefaultTheme, DarkTheme } from "@react-navigation/native";
+
+function AppContent() {
   const { token, isSplashLoading } = useAuth();
+  const { isDarkMode, colors } = useTheme();
+
+  // Custom Navigation Theme
+  const navigationTheme = {
+    dark: isDarkMode,
+    colors: {
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.card,
+      text: colors.text,
+      border: colors.border,
+      notification: colors.danger,
+    },
+  };
 
   if (isSplashLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <NavigationContainer theme={navigationTheme}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.navBackground },
+          headerTintColor: colors.navText,
+          headerShadowVisible: false, // Cleaner look
+        }}
+      >
         {token ? (
           <>
             <Stack.Screen
@@ -70,6 +107,31 @@ export default function AppNavigator() {
               component={AllTransactionsScreen}
               options={{ title: "All Transactions" }}
             />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{ title: "Settings" }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: "Edit Profile" }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{ title: "Change Password" }}
+            />
+            <Stack.Screen
+              name="RecurringTransactions"
+              component={RecurringTransactionsScreen}
+              options={{ title: "Recurring Transactions" }}
+            />
+            <Stack.Screen
+              name="AddRecurring"
+              component={AddRecurringScreen}
+              options={{ title: "New Recurring Rule" }}
+            />
           </>
         ) : (
           <>
@@ -87,5 +149,13 @@ export default function AppNavigator() {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function AppNavigator() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const { login, isBiometricEnabled, loginWithBiometrics } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -26,6 +26,22 @@ export default function LoginScreen({ navigation }) {
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const formAnim = useRef(new Animated.Value(50)).current;
   const formOpacity = useRef(new Animated.Value(0)).current;
+
+  // Auto-prompt for biometrics
+  useEffect(() => {
+    if (isBiometricEnabled) {
+      handleBiometricLogin();
+    }
+  }, [isBiometricEnabled]);
+
+  const handleBiometricLogin = async () => {
+    try {
+      await loginWithBiometrics();
+    } catch (e) {
+      // Fail silently or show error toast, user can still use password
+      console.log("Bio login failed or cancelled");
+    }
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -173,6 +189,20 @@ export default function LoginScreen({ navigation }) {
               loading={loading}
             />
 
+            {isBiometricEnabled && (
+              <TouchableOpacity
+                onPress={handleBiometricLogin}
+                style={styles.bioButton}
+              >
+                <Ionicons
+                  name="finger-print-outline"
+                  size={24}
+                  color="#4F46E5"
+                />
+                <Text style={styles.bioText}>Login with Biometrics</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               onPress={() => navigation.navigate("Register")}
               style={styles.footerLink}
@@ -285,5 +315,17 @@ const styles = StyleSheet.create({
   boldText: {
     color: "#4F46E5",
     fontWeight: "bold",
+  },
+  bioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 15,
+    padding: 10,
+  },
+  bioText: {
+    color: "#4F46E5",
+    fontWeight: "600",
+    marginLeft: 8,
   },
 });

@@ -34,6 +34,14 @@ const AuthService = {
   getUser: async () => {
     return await api.get("/api/user");
   },
+  updateProfile: async (data) => {
+    const response = await api.put("/api/profile", data);
+    return response.data;
+  },
+  changePassword: async (data) => {
+    const response = await api.put("/api/profile/password", data);
+    return response.data;
+  },
 };
 
 export default AuthService;

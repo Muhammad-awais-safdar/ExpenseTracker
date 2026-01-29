@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\LoanController;
 use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\RecurringTransactionController;
 
 Route::post('/mobile/register', [MobileAuthController::class, 'register']);
 Route::post('/mobile/login', [MobileAuthController::class, 'login']);
@@ -33,4 +36,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('loans', LoanController::class);
     Route::apiResource('budgets', BudgetController::class);
     Route::get('/transactions', [TransactionController::class, 'index']);
+    
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+    
+    // Export
+    Route::get('/export/transactions', [ExportController::class, 'export']);
+    
+    // Recurring
+    Route::apiResource('recurring', RecurringTransactionController::class);
 });

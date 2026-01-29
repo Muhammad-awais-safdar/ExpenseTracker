@@ -11,15 +11,13 @@ import {
   Platform,
   Animated,
 } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
-import DashboardService from "../services/dashboardService";
 import { useFocusEffect } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import MemoryCache from "../utils/memoryCache";
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,31 +87,55 @@ export default function HomeScreen({ navigation }) {
   const QuickAction = ({ title, icon, color, route }) => (
     <View style={styles.actionBtnWrapper}>
       <TouchableOpacity
-        style={styles.actionBtn}
+        style={[
+          styles.actionBtn,
+          {
+            backgroundColor: colors.card,
+            shadowColor: isDarkMode ? "#000" : "#ccc",
+          },
+        ]}
         onPress={() => navigation.navigate(route)}
       >
         <View style={[styles.actionIcon, { backgroundColor: color + "20" }]}>
           <Ionicons name={icon} size={24} color={color} />
         </View>
-        <Text style={styles.actionBtnText}>{title}</Text>
+        <Text style={[styles.actionBtnText, { color: colors.text }]}>
+          {title}
+        </Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "light-content"} />
       <LinearGradient
-        colors={["#4F46E5", "#3730A3"]}
+        colors={
+          isDarkMode ? [colors.card, colors.background] : ["#4F46E5", "#3730A3"]
+        }
         style={styles.headerBackground}
       >
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.username}>{user?.name?.split(" ")[0]}</Text>
+            <Text
+              style={[
+                styles.username,
+                { color: isDarkMode ? colors.text : "#fff" },
+              ]}
+            >
+              {user?.name?.split(" ")[0]}
+            </Text>
           </View>
-          <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Settings")}
+            style={styles.logoutBtn}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={isDarkMode ? colors.text : "#fff"}
+            />
           </TouchableOpacity>
         </View>
 
@@ -122,6 +144,12 @@ export default function HomeScreen({ navigation }) {
           style={[
             styles.balanceCard,
             {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(255,255,255,0.1)",
+              borderColor: isDarkMode
+                ? "rgba(255,255,255,0.1)"
+                : "rgba(255,255,255,0.2)",
               opacity: balanceAnim,
               transform: [
                 {
@@ -134,8 +162,24 @@ export default function HomeScreen({ navigation }) {
             },
           ]}
         >
-          <Text style={styles.balanceLabel}>Total Balance</Text>
-          <Text style={styles.balanceValue}>
+          <Text
+            style={[
+              styles.balanceLabel,
+              {
+                color: isDarkMode
+                  ? colors.textSecondary
+                  : "rgba(255,255,255,0.8)",
+              },
+            ]}
+          >
+            Total Balance
+          </Text>
+          <Text
+            style={[
+              styles.balanceValue,
+              { color: isDarkMode ? colors.text : "#fff" },
+            ]}
+          >
             Rs {dashboardData?.summary?.balance?.toFixed(2) || "0.00"}
           </Text>
           <View style={styles.statsRow}>
@@ -148,11 +192,25 @@ export default function HomeScreen({ navigation }) {
               >
                 <Ionicons name="arrow-down" size={12} color="#10B981" />
               </View>
-              <Text style={styles.statValue}>
+              <Text
+                style={[
+                  styles.statValue,
+                  { color: isDarkMode ? colors.text : "#fff" },
+                ]}
+              >
                 Rs {dashboardData?.summary?.monthly_income?.toFixed(0)}
               </Text>
             </View>
-            <View style={styles.divider} />
+            <View
+              style={[
+                styles.divider,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(255,255,255,0.2)",
+                },
+              ]}
+            />
             <View style={styles.stat}>
               <View
                 style={[
@@ -162,7 +220,12 @@ export default function HomeScreen({ navigation }) {
               >
                 <Ionicons name="arrow-up" size={12} color="#EF4444" />
               </View>
-              <Text style={styles.statValue}>
+              <Text
+                style={[
+                  styles.statValue,
+                  { color: isDarkMode ? colors.text : "#fff" },
+                ]}
+              >
                 Rs {dashboardData?.summary?.monthly_expense?.toFixed(0)}
               </Text>
             </View>
@@ -177,7 +240,7 @@ export default function HomeScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4F46E5"
+            tintColor={colors.primary}
           />
         }
       >
@@ -217,23 +280,42 @@ export default function HomeScreen({ navigation }) {
 
           {/* Recent Transactions */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Recent Transactions
+            </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate("AllTransactions")}
             >
-              <Text style={styles.seeAll}>See All</Text>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>
+                See All
+              </Text>
             </TouchableOpacity>
           </View>
 
           {dashboardData?.recent_transactions?.length > 0 ? (
             dashboardData.recent_transactions.map((item, index) => (
-              <View key={index} style={styles.transactionItem}>
+              <View
+                key={index}
+                style={[
+                  styles.transactionItem,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: isDarkMode ? "#000" : "#000",
+                  },
+                ]}
+              >
                 <View
                   style={[
                     styles.iconBox,
                     {
                       backgroundColor:
-                        item.type === "expense" ? "#FEE2E2" : "#D1FAE5",
+                        item.type === "expense"
+                          ? isDarkMode
+                            ? "#371B1B"
+                            : "#FEE2E2"
+                          : isDarkMode
+                            ? "#064E3B"
+                            : "#D1FAE5",
                     },
                   ]}
                 >
@@ -248,7 +330,7 @@ export default function HomeScreen({ navigation }) {
                   />
                 </View>
                 <View style={styles.transactionInfo}>
-                  <Text style={styles.tTitle}>
+                  <Text style={[styles.tTitle, { color: colors.text }]}>
                     {item.category?.name ||
                       (item.type === "income" ? item.source : item.description)}
                   </Text>
@@ -325,7 +407,7 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
 
-  scrollContent: { marginTop: -20, paddingTop: 20, paddingHorizontal: 20 },
+  scrollContent: { marginTop: 10, paddingHorizontal: 20 },
 
   actionsGrid: {
     flexDirection: "row",
