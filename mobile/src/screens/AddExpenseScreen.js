@@ -11,6 +11,7 @@ import {
 import ExpenseService from "../services/expenseService";
 import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
+import { useSync } from "../context/SyncContext";
 import { Ionicons } from "@expo/vector-icons";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
@@ -25,6 +26,7 @@ export default function AddExpenseScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
+  const { isOnline, addToQueue } = useSync();
 
   useEffect(() => {
     loadCategories();
@@ -59,24 +61,47 @@ export default function AddExpenseScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await ExpenseService.create({
-        amount: parseFloat(amount),
-        description,
-        date,
-        category_id: selectedCategory,
-      });
-      MemoryCache.clear(); // Clear cache to force refresh
-      setAlertConfig({
-        visible: true,
-        title: "Success",
-        message: "Expense recorded successfully!",
-        type: "success",
-        confirmText: "Done",
-        onConfirm: () => {
-          setAlertConfig({ visible: false });
-          navigation.goBack();
-        },
-      });
+      if (!isOnline) {
+        addToQueue({
+          type: "ADD_EXPENSE",
+          payload: {
+            amount: parseFloat(amount),
+            description,
+            date,
+            category_id: selectedCategory,
+          },
+        });
+        setAlertConfig({
+          visible: true,
+          title: "Saved Offline",
+          message: "Expense saved to offline queue. Will sync when online.",
+          type: "info",
+          confirmText: "Done",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      } else {
+        await ExpenseService.create({
+          amount: parseFloat(amount),
+          description,
+          date,
+          category_id: selectedCategory,
+        });
+        MemoryCache.clear(); // Clear cache to force refresh
+        setAlertConfig({
+          visible: true,
+          title: "Success",
+          message: "Expense recorded successfully!",
+          type: "success",
+          confirmText: "Done",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      }
     } catch (error) {
       setAlertConfig({
         visible: true,

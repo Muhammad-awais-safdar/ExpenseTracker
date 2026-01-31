@@ -30,8 +30,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "b2a96069-da3e-48dc-b009-cab766d35855"
+        "projectId": "5f2d95e5-1034-4ba1-ba4a-2f48fa1b61ce"
       }
-    }
+    },
+    "owner": "awaissafdar143"
   }
 }

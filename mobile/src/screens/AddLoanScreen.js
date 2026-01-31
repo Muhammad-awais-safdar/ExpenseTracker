@@ -13,6 +13,7 @@ import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
 import { Ionicons } from "@expo/vector-icons";
+import { useSync } from "../context/SyncContext";
 
 export default function AddLoanScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -22,6 +23,7 @@ export default function AddLoanScreen({ navigation }) {
   const [dueDate, setDueDate] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const { isOnline, addToQueue } = useSync();
 
   const handleSubmit = async () => {
     if (!personName || !amount) {
@@ -38,25 +40,49 @@ export default function AddLoanScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await LoanService.create({
-        person_name: personName,
-        amount: parseFloat(amount),
-        type,
-        due_date: dueDate || null,
-        description,
-      });
-      MemoryCache.clear();
-      setAlertConfig({
-        visible: true,
-        title: "Loan Recorded",
-        message: "The loan has been saved successfully.",
-        type: "success",
-        confirmText: "Done",
-        onConfirm: () => {
-          setAlertConfig({ visible: false });
-          navigation.goBack();
-        },
-      });
+      if (!isOnline) {
+        addToQueue({
+          type: "ADD_LOAN",
+          payload: {
+            person_name: personName,
+            amount: parseFloat(amount),
+            type,
+            due_date: dueDate || null,
+            description,
+          },
+        });
+        setAlertConfig({
+          visible: true,
+          title: "Saved Offline",
+          message: "Loan saved to offline queue. Will sync when online.",
+          type: "info",
+          confirmText: "Done",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      } else {
+        await LoanService.create({
+          person_name: personName,
+          amount: parseFloat(amount),
+          type,
+          due_date: dueDate || null,
+          description,
+        });
+        MemoryCache.clear();
+        setAlertConfig({
+          visible: true,
+          title: "Loan Recorded",
+          message: "The loan has been saved successfully.",
+          type: "success",
+          confirmText: "Done",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      }
     } catch (error) {
       setAlertConfig({
         visible: true,

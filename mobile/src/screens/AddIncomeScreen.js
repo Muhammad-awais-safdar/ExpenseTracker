@@ -11,6 +11,7 @@ import {
 import IncomeService from "../services/incomeService";
 import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
+import { useSync } from "../context/SyncContext";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
@@ -24,6 +25,7 @@ export default function AddIncomeScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
+  const { isOnline, addToQueue } = useSync();
 
   useEffect(() => {
     loadCategories();
@@ -58,24 +60,47 @@ export default function AddIncomeScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await IncomeService.create({
-        amount: parseFloat(amount),
-        source,
-        date,
-        category_id: selectedCategory,
-      });
-      MemoryCache.clear();
-      setAlertConfig({
-        visible: true,
-        title: "Success",
-        message: "Income added successfully!",
-        type: "success",
-        confirmText: "Great",
-        onConfirm: () => {
-          setAlertConfig({ visible: false });
-          navigation.goBack();
-        },
-      });
+      if (!isOnline) {
+        addToQueue({
+          type: "ADD_INCOME",
+          payload: {
+            amount: parseFloat(amount),
+            source,
+            date,
+            category_id: selectedCategory,
+          },
+        });
+        setAlertConfig({
+          visible: true,
+          title: "Saved Offline",
+          message: "Income saved to offline queue. Will sync when online.",
+          type: "info",
+          confirmText: "Done",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      } else {
+        await IncomeService.create({
+          amount: parseFloat(amount),
+          source,
+          date,
+          category_id: selectedCategory,
+        });
+        MemoryCache.clear();
+        setAlertConfig({
+          visible: true,
+          title: "Success",
+          message: "Income added successfully!",
+          type: "success",
+          confirmText: "Great",
+          onConfirm: () => {
+            setAlertConfig({ visible: false });
+            navigation.goBack();
+          },
+        });
+      }
     } catch (error) {
       setAlertConfig({
         visible: true,

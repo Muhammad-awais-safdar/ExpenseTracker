@@ -7,11 +7,19 @@
     "preview": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "API_URL": "https://expense-backend-tnag.onrender.com",
+        "APP_NAME": "ExpenseTrackerMobile"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "API_URL": "https://expense-backend-tnag.onrender.com",
+        "APP_NAME": "ExpenseTrackerMobile"
       }
     }
   }
