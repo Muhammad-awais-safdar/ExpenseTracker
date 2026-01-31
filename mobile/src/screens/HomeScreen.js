@@ -14,6 +14,10 @@ import {
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import DashboardService from "../services/dashboardService";
+import MemoryCache from "../utils/memoryCache";
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -28,22 +32,45 @@ export default function HomeScreen({ navigation }) {
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
   const loadDashboard = async () => {
-    const cached = MemoryCache.get("dashboard");
-    if (cached) {
-      setDashboardData(cached);
-      setLoading(false);
-    }
+    console.log("[HomeScreen] loadDashboard started");
     try {
+      console.log("[HomeScreen] Checking cache...");
+      const cached = MemoryCache.get("dashboard");
+      console.log("[HomeScreen] Cache result:", cached ? "Found" : "Miss");
+
+      if (cached) {
+        setDashboardData(cached);
+        setLoading(false);
+      }
+
+      console.log("[HomeScreen] Fetching from API...");
       const data = await DashboardService.getSummary();
+      console.log("[HomeScreen] API Fetch Success");
+
       setDashboardData(data);
       MemoryCache.set("dashboard", data);
     } catch (error) {
-      console.error("Dashboard fetch error:", error);
+      console.error("[HomeScreen] Dashboard fetch error:", error);
+      if (error.response?.status === 401) {
+        console.log("[HomeScreen] 401 detected, logging out");
+        logout(); // Force logout on 401
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      console.log("[HomeScreen] Finally block reached");
+      if (mounted.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
+
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,13 +103,42 @@ export default function HomeScreen({ navigation }) {
     loadDashboard();
   }, []);
 
+  const [showLongWaitMessage, setShowLongWaitMessage] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (loading) {
+      timer = setTimeout(() => {
+        setShowLongWaitMessage(true);
+      }, 10000); // Show message after 10 seconds
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
         <Text style={{ marginTop: 10, color: "#6B7280" }}>
-          Connecting to server...
+          {showLongWaitMessage
+            ? "Server is waking up (can take 1 min)..."
+            : "Connecting to server..."}
         </Text>
+        {showLongWaitMessage && (
+          <TouchableOpacity
+            onPress={logout}
+            style={{
+              marginTop: 20,
+              padding: 10,
+              backgroundColor: "#FEE2E2",
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: "#EF4444", fontWeight: "bold" }}>
+              Cancel & Logout
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }

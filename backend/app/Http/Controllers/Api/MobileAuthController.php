@@ -35,19 +35,37 @@ class MobileAuthController extends Controller
 
     public function login(Request $request)
     {
+        $start = microtime(true);
+        \Illuminate\Support\Facades\Log::info("Login Start: $start");
+
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
+        
+        $validated = microtime(true);
+        \Illuminate\Support\Facades\Log::info("Login Validated: " . ($validated - $start));
 
         if (!Auth::attempt($request->only('email', 'password'))) {
+            \Illuminate\Support\Facades\Log::info("Login Failed Auth: " . (microtime(true) - $validated));
             return response()->json([
                 'message' => 'Invalid login details'
             ], 401);
         }
 
+        $authed = microtime(true);
+        \Illuminate\Support\Facades\Log::info("Login Auth Success: " . ($authed - $validated));
+
         $user = User::where('email', $request->email)->firstOrFail();
+        
+        $userFetched = microtime(true);
+        \Illuminate\Support\Facades\Log::info("Login User Fetched: " . ($userFetched - $authed));
+
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        $tokenCreated = microtime(true);
+        \Illuminate\Support\Facades\Log::info("Login Token Created: " . ($tokenCreated - $userFetched));
+        \Illuminate\Support\Facades\Log::info("Login Total: " . ($tokenCreated - $start));
 
         return response()->json([
             'user' => $user,

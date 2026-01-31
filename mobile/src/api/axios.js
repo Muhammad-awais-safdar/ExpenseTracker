@@ -15,7 +15,10 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
-    console.log(`[API REQUEST] ${config.method.toUpperCase()} ${config.url}`);
+    config.metadata = { startTime: new Date() };
+    console.log(
+      `[API REQUEST] ${config.method.toUpperCase()} ${config.url} at ${config.metadata.startTime.toISOString()}`,
+    );
     return config;
   },
   (error) => {
@@ -34,9 +37,20 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
+    const duration = new Date() - response.config.metadata.startTime;
+    console.log(
+      `[API RESPONSE] ${response.status} ${response.config.url} - ${duration}ms`,
+    );
     return response;
   },
   (error) => {
+    const duration = error.config?.metadata
+      ? new Date() - error.config.metadata.startTime
+      : "N/A";
+    console.log(
+      `[API ERROR] ${error.response?.status || "Network Error"} ${error.config?.url || "Unknown"} - ${duration}ms`,
+    );
+
     if (error.response) {
       // Handle 401 Unauthorized globally
       if (error.response.status === 401 && onUnauthorized) {
