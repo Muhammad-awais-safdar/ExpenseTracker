@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const API_URL = process.env.API_URL;
+console.log("Configured API_URL:", API_URL); // Debug Log
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,6 +15,7 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
+    console.log(`[API REQUEST] ${config.method.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
