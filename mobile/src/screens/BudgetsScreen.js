@@ -6,12 +6,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  ProgressBarAndroid,
 } from "react-native";
 import BudgetService from "../services/budgetService";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTheme } from "../context/ThemeContext";
 
 export default function BudgetsScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +34,72 @@ export default function BudgetsScreen({ navigation }) {
   );
 
   if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{ flex: 1 }}
+        color={colors.primary}
+      />
+    );
   }
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    item: {
+      padding: 15,
+      marginHorizontal: 15,
+      marginTop: 10,
+      backgroundColor: colors.card,
+      borderRadius: 10,
+      elevation: 1,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 5,
+    },
+    catName: { fontSize: 18, fontWeight: "bold", color: colors.text },
+    amt: { fontSize: 18, fontWeight: "bold", color: colors.info },
+    period: { color: colors.textSecondary, fontSize: 12, marginTop: 10 },
+
+    progressContainer: {
+      height: 8,
+      backgroundColor: colors.border,
+      borderRadius: 4,
+      marginVertical: 10,
+      overflow: "hidden",
+    },
+    progressBar: {
+      height: "100%",
+      borderRadius: 4,
+    },
+    rowBetween: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 5,
+    },
+    usedText: { fontSize: 14, color: colors.textSecondary },
+    totalText: { fontSize: 14, color: colors.text, fontWeight: "bold" },
+
+    empty: { textAlign: "center", marginTop: 50, color: colors.textSecondary },
+    fab: {
+      position: "absolute",
+      bottom: 30,
+      right: 30,
+      backgroundColor: colors.info,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 5,
+    },
+    fabText: { color: "#fff", fontSize: 30, fontWeight: "bold", marginTop: -2 },
+  });
 
   return (
     <View style={styles.container}>
@@ -56,7 +121,7 @@ export default function BudgetsScreen({ navigation }) {
                   styles.progressBar,
                   {
                     width: `${item.percentage}%`,
-                    backgroundColor: item.category?.color || "#4F46E5",
+                    backgroundColor: item.category?.color || colors.info,
                   },
                 ]}
               />
@@ -88,57 +153,3 @@ export default function BudgetsScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  item: {
-    padding: 15,
-    marginHorizontal: 15,
-    marginTop: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    elevation: 1,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  catName: { fontSize: 18, fontWeight: "bold" },
-  amt: { fontSize: 18, fontWeight: "bold", color: "#4F46E5" },
-  period: { color: "#666", fontSize: 12, marginTop: 10 },
-
-  progressContainer: {
-    height: 8,
-    backgroundColor: "#E5E7EB", // Gray-200
-    borderRadius: 4,
-    marginVertical: 10,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  rowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-  },
-  usedText: { fontSize: 14, color: "#6B7280" },
-  totalText: { fontSize: 14, color: "#111827", fontWeight: "bold" },
-
-  empty: { textAlign: "center", marginTop: 50, color: "#888" },
-  fab: {
-    position: "absolute",
-    bottom: 30,
-    right: 30,
-    backgroundColor: "#F59E0B",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-  },
-  fabText: { color: "#fff", fontSize: 30, fontWeight: "bold", marginTop: -2 },
-});

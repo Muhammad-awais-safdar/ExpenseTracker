@@ -12,8 +12,10 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import RecurringService from "../services/recurringService";
+import { useTheme } from "../context/ThemeContext";
 
 export default function RecurringTransactionsScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,6 +75,88 @@ export default function RecurringTransactionsScreen({ navigation }) {
     );
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    list: {
+      padding: 20,
+    },
+    card: {
+      backgroundColor: colors.card,
+      padding: 15,
+      borderRadius: 12,
+      marginBottom: 15,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    iconBox: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 10,
+    },
+    title: {
+      fontWeight: "bold",
+      fontSize: 16,
+      color: colors.text,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      textTransform: "capitalize",
+    },
+    footer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingTop: 10,
+    },
+    amount: {
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+    fab: {
+      position: "absolute",
+      bottom: 30,
+      right: 30,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+    },
+    emptyText: {
+      textAlign: "center",
+      marginTop: 50,
+      color: colors.textSecondary,
+    },
+  });
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -82,14 +166,20 @@ export default function RecurringTransactionsScreen({ navigation }) {
               styles.iconBox,
               {
                 backgroundColor:
-                  item.type === "expense" ? "#FEE2E2" : "#D1FAE5",
+                  item.type === "expense"
+                    ? isDarkMode
+                      ? "rgba(239, 68, 68, 0.1)"
+                      : "#FEE2E2"
+                    : isDarkMode
+                      ? "rgba(16, 185, 129, 0.1)"
+                      : "#D1FAE5",
               },
             ]}
           >
             <Ionicons
               name={item.type === "expense" ? "cart-outline" : "wallet-outline"}
               size={20}
-              color={item.type === "expense" ? "#EF4444" : "#10B981"}
+              color={item.type === "expense" ? colors.danger : colors.success}
             />
           </View>
           <View>
@@ -103,20 +193,24 @@ export default function RecurringTransactionsScreen({ navigation }) {
         <Switch
           value={item.is_active}
           onValueChange={() => toggleActive(item.id, item.is_active)}
-          trackColor={{ false: "#767577", true: "#4F46E5" }}
+          trackColor={{ false: "#767577", true: colors.primary }}
         />
       </View>
       <View style={styles.footer}>
         <Text
           style={[
             styles.amount,
-            { color: item.type === "expense" ? "#EF4444" : "#10B981" },
+            { color: item.type === "expense" ? colors.danger : colors.success },
           ]}
         >
           {item.type === "expense" ? "-" : "+"} Rs {item.amount}
         </Text>
         <TouchableOpacity onPress={() => handleDelete(item.id)}>
-          <Ionicons name="trash-outline" size={20} color="#9CA3AF" />
+          <Ionicons
+            name="trash-outline"
+            size={20}
+            color={colors.textSecondary}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -127,7 +221,7 @@ export default function RecurringTransactionsScreen({ navigation }) {
       {loading ? (
         <ActivityIndicator
           size="large"
-          color="#4F46E5"
+          color={colors.primary}
           style={{ marginTop: 20 }}
         />
       ) : (
@@ -153,85 +247,3 @@ export default function RecurringTransactionsScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  list: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  title: {
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#1F2937",
-  },
-  subtitle: {
-    color: "#6B7280",
-    fontSize: 12,
-    textTransform: "capitalize",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-    paddingTop: 10,
-  },
-  amount: {
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 30,
-    right: 30,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#4F46E5",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  emptyText: {
-    textAlign: "center",
-    marginTop: 50,
-    color: "#9CA3AF",
-  },
-});

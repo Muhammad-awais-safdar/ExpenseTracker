@@ -14,6 +14,7 @@ import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useSync } from "../context/SyncContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function AddLoanScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -24,6 +25,7 @@ export default function AddLoanScreen({ navigation }) {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const { isOnline, addToQueue } = useSync();
+  const { colors, isDarkMode } = useTheme();
 
   const handleSubmit = async () => {
     if (!personName || !amount) {
@@ -96,6 +98,46 @@ export default function AddLoanScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, padding: 20, backgroundColor: colors.background },
+    label: {
+      fontSize: 16,
+      fontWeight: "bold",
+      marginTop: 15,
+      marginBottom: 5,
+      color: colors.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 16,
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+    },
+
+    typeRow: { flexDirection: "row", marginBottom: 10 },
+    typeBtn: {
+      flex: 1,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: "center",
+      marginHorizontal: 5,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+    },
+    typeBtnActive: {
+      backgroundColor: colors.warning,
+      borderColor: colors.warning,
+    },
+    typeText: { fontWeight: "bold", color: colors.textSecondary },
+    typeTextActive: { color: "#fff" },
+
+    submitBtnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  });
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.label}>Type</Text>
@@ -128,6 +170,7 @@ export default function AddLoanScreen({ navigation }) {
         value={personName}
         onChangeText={setPersonName}
         placeholder="John Doe"
+        placeholderTextColor={colors.placeholder}
       />
 
       <Text style={styles.label}>Amount (PKR)</Text>
@@ -137,6 +180,7 @@ export default function AddLoanScreen({ navigation }) {
         onChangeText={setAmount}
         keyboardType="numeric"
         placeholder="0.00"
+        placeholderTextColor={colors.placeholder}
       />
 
       <CustomDatePicker
@@ -151,54 +195,17 @@ export default function AddLoanScreen({ navigation }) {
         value={description}
         onChangeText={setDescription}
         placeholder="Reason for loan"
+        placeholderTextColor={colors.placeholder}
       />
 
       <ModernButton
         title="Save Loan"
         onPress={handleSubmit}
         loading={loading}
-        variant={type === "given" ? "danger" : "primary"} // Red for money leaving (given), Blue/Green for taken? Or just Primary/Indigo.
-        // Let's stick to Primary or logic. If I gave loan, money left me (Expense-ish). If I took, money came (Income-ish).
-        // For consistency let's use default primary, or maybe customized.
-        // Let's use Primary to keep it clean.
+        style={{ backgroundColor: colors.warning, marginTop: 30 }}
       />
 
       <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  label: { fontSize: 16, fontWeight: "bold", marginTop: 15, marginBottom: 5 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
-  },
-
-  typeRow: { flexDirection: "row", marginBottom: 10 },
-  typeBtn: {
-    flex: 1,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-    marginHorizontal: 5,
-    borderRadius: 10,
-  },
-  typeBtnActive: { backgroundColor: "#333", borderColor: "#333" },
-  typeText: { fontWeight: "bold", color: "#666" },
-  typeTextActive: { color: "#fff" },
-
-  submitBtn: {
-    backgroundColor: "#333",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 30,
-    alignItems: "center",
-  },
-  submitBtnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-});

@@ -11,8 +11,10 @@ import {
 import LoanService from "../services/loanService";
 import { useFocusEffect } from "@react-navigation/native";
 import CustomAlert from "../components/ui/CustomAlert";
+import { useTheme } from "../context/ThemeContext";
 
 export default function LoansScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -40,8 +42,96 @@ export default function LoansScreen({ navigation }) {
   );
 
   if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{ flex: 1 }}
+        color={colors.warning}
+      />
+    );
   }
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    filterContainer: {
+      flexDirection: "row",
+      padding: 15,
+      backgroundColor: colors.card,
+    },
+    filterBtn: {
+      paddingVertical: 8,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      marginRight: 10,
+      backgroundColor: colors.inputBackground,
+    },
+    activeFilter: { backgroundColor: colors.warning },
+    filterText: { color: colors.textSecondary },
+    activeFilterText: { color: "#fff" },
+
+    item: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 15,
+      marginHorizontal: 15,
+      marginTop: 10,
+      backgroundColor: colors.card,
+      borderRadius: 10,
+      elevation: 1,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    person: { fontSize: 18, fontWeight: "bold", color: colors.text },
+    date: { color: colors.textSecondary, fontSize: 12, marginBottom: 5 },
+    amount: { fontWeight: "bold", fontSize: 18 },
+    given: { color: colors.danger }, // Money left you
+    taken: { color: colors.success }, // Money came to you
+    typeLabel: { fontSize: 10, color: colors.textSecondary },
+
+    badge: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 5,
+      alignSelf: "flex-start",
+    },
+    paidBadge: {
+      backgroundColor: isDarkMode ? "rgba(16, 185, 129, 0.2)" : "#D1FAE5",
+    },
+    pendingBadge: {
+      backgroundColor: isDarkMode ? "rgba(245, 158, 11, 0.2)" : "#FEF3C7",
+    },
+    badgeText: { fontSize: 10, fontWeight: "bold", color: colors.text },
+
+    empty: { textAlign: "center", marginTop: 50, color: colors.textSecondary },
+    fab: {
+      position: "absolute",
+      bottom: 30,
+      right: 30,
+      backgroundColor: colors.warning,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 5,
+    },
+    fabText: { color: "#fff", fontSize: 30, fontWeight: "bold", marginTop: -2 },
+
+    payBtn: {
+      marginTop: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 15,
+    },
+    payBtnText: {
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: "bold",
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -131,7 +221,7 @@ export default function LoansScreen({ navigation }) {
                     styles.payBtn,
                     {
                       backgroundColor:
-                        item.type === "given" ? "#10B981" : "#4F46E5",
+                        item.type === "given" ? colors.success : colors.info,
                     },
                   ]}
                   onPress={() => {
@@ -188,77 +278,3 @@ export default function LoansScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
-  filterContainer: {
-    flexDirection: "row",
-    padding: 15,
-    backgroundColor: "#fff",
-  },
-  filterBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginRight: 10,
-    backgroundColor: "#f0f0f0",
-  },
-  activeFilter: { backgroundColor: "#333" },
-  filterText: { color: "#333" },
-  activeFilterText: { color: "#fff" },
-
-  item: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 15,
-    marginHorizontal: 15,
-    marginTop: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    elevation: 1,
-  },
-  person: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  date: { color: "#888", fontSize: 12, marginBottom: 5 },
-  amount: { fontWeight: "bold", fontSize: 18 },
-  given: { color: "#EF4444" }, // Money left you
-  taken: { color: "#10B981" }, // Money came to you
-  typeLabel: { fontSize: 10, color: "#666" },
-
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 5,
-    alignSelf: "flex-start",
-  },
-  paidBadge: { backgroundColor: "#D1FAE5" },
-  pendingBadge: { backgroundColor: "#FEF3C7" },
-  badgeText: { fontSize: 10, fontWeight: "bold", color: "#333" },
-
-  empty: { textAlign: "center", marginTop: 50, color: "#888" },
-  fab: {
-    position: "absolute",
-    bottom: 30,
-    right: 30,
-    backgroundColor: "#333",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-  },
-  fabText: { color: "#fff", fontSize: 30, fontWeight: "bold", marginTop: -2 },
-
-  payBtn: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 15,
-  },
-  payBtnText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-});

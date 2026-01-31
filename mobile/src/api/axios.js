@@ -4,7 +4,7 @@ const API_URL = process.env.API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15000, // 15 seconds timeout
+  timeout: 60000, // 60 seconds (Render Free Tier Cold Start)
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

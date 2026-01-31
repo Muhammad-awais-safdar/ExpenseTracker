@@ -159,9 +159,5 @@ function AppContent() {
 }
 
 export default function AppNavigator() {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
-  );
+  return <AppContent />;
 }

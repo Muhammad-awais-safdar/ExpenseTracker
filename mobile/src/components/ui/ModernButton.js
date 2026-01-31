@@ -16,14 +16,17 @@ export default function ModernButton({
   icon: Icon,
 }) {
   const getColors = () => {
-    if (disabled) return ["#E5E7EB", "#D1D5DB"];
+    if (disabled) return ["#E5E7EB", "#D1D5DB"]; // Keep gray for disabled
     if (variant === "danger") return ["#EF4444", "#DC2626"];
-    if (variant === "secondary") return ["#fff", "#fff"];
-    return ["#4F46E5", "#4338CA"]; // Primary Indigo
+    if (variant === "secondary") return ["transparent", "transparent"];
+    return ["#4F46E5", "#4338CA"]; // Default Primary
   };
 
   const getTextColor = () => {
     if (disabled) return "#9CA3AF";
+    // For secondary, we return null here to let the caller or parent handle it, or default to primary
+    // But since this is a UI component, let's keep it simple for now or pass color as prop?
+    // Let's stick to standard behavior but allowing transparency.
     if (variant === "secondary") return "#4F46E5";
     return "#fff";
   };
@@ -50,7 +53,7 @@ export default function ModernButton({
           <ActivityIndicator color={getTextColor()} />
         ) : (
           <>
-            {Icon && <Icon style={{ marginRight: 8 }} />}
+            {Icon && <Icon style={{ marginRight: 8 }} color={getTextColor()} />}
             <Text style={[styles.text, { color: getTextColor() }]}>
               {title}
             </Text>
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     marginVertical: 10,
-    shadowColor: "#4F46E5",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -81,7 +84,7 @@ const styles = StyleSheet.create({
   },
   secondaryBorder: {
     borderWidth: 1,
-    borderColor: "#E0E7FF",
+    borderColor: "#4F46E5",
   },
   text: {
     fontSize: 16,

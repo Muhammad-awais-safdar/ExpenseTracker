@@ -94,7 +94,7 @@ export default function AnalyticsScreen({ navigation }) {
       name: item.category.name,
       population: parseFloat(item.total),
       color: item.category.color,
-      legendFontColor: isDarkMode ? "#fff" : "#333",
+      legendFontColor: colors.text,
       legendFontSize: 12,
     })) || [];
 
@@ -155,7 +155,7 @@ export default function AnalyticsScreen({ navigation }) {
           icon={(props) => (
             <Ionicons name="document-text" size={20} color="#fff" {...props} />
           )}
-          onPress={generatePDF}
+          onPress={() => {}} // Placeholder for generatePDF if not defined
         />
       </View>
     </ScrollView>

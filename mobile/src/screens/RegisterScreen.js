@@ -11,6 +11,7 @@ import {
   Animated,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import GradientBackground from "../components/ui/GradientBackground";
 import ModernButton from "../components/ui/ModernButton";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const { register } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -77,6 +79,102 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    keyboardView: { flex: 1 },
+    container: {
+      flexGrow: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    header: {
+      marginBottom: 30,
+      marginTop: 20,
+    },
+    backBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: isDarkMode
+        ? colors.surfaceHighlight
+        : "rgba(255,255,255,0.2)",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    appTitle: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: isDarkMode ? colors.textSecondary : "rgba(255,255,255,0.8)",
+    },
+    formContainer: {
+      backgroundColor: isDarkMode ? colors.surface : "#fff",
+      borderRadius: 24,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    inputGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.inputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      height: 56,
+    },
+    inputIcon: { marginRight: 12 },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      height: "100%",
+    },
+    spacer: { height: 12 },
+    errorText: {
+      color: colors.danger,
+      fontSize: 12,
+      marginLeft: 4,
+      marginTop: -8,
+      marginBottom: 12,
+    },
+    generalErrorBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2",
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    generalErrorText: {
+      color: colors.danger,
+      marginLeft: 8,
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    footerLink: {
+      marginTop: 20,
+      alignItems: "center",
+    },
+    footerText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    boldText: {
+      color: colors.primary,
+      fontWeight: "bold",
+    },
+  });
+
   return (
     <GradientBackground>
       <KeyboardAvoidingView
@@ -98,7 +196,11 @@ export default function RegisterScreen({ navigation }) {
               onPress={() => navigation.goBack()}
               style={styles.backBtn}
             >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={isDarkMode ? colors.text : "#fff"}
+              />
             </TouchableOpacity>
             <Text style={styles.appTitle}>Join Us</Text>
             <Text style={styles.subtitle}>Create your account</Text>
@@ -115,13 +217,13 @@ export default function RegisterScreen({ navigation }) {
               <Ionicons
                 name="person-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Full Name"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={name}
                 onChangeText={setName}
               />
@@ -134,13 +236,13 @@ export default function RegisterScreen({ navigation }) {
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Email Address"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -155,13 +257,13 @@ export default function RegisterScreen({ navigation }) {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -175,13 +277,13 @@ export default function RegisterScreen({ navigation }) {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Confirm Password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={passwordConfirmation}
                 onChangeText={setPasswordConfirmation}
                 secureTextEntry
@@ -190,7 +292,7 @@ export default function RegisterScreen({ navigation }) {
 
             {errors.general && (
               <View style={styles.generalErrorBox}>
-                <Ionicons name="alert-circle" size={20} color="#EF4444" />
+                <Ionicons name="alert-circle" size={20} color={colors.danger} />
                 <Text style={styles.generalErrorText}>{errors.general[0]}</Text>
               </View>
             )}
@@ -201,6 +303,7 @@ export default function RegisterScreen({ navigation }) {
               title="Create Account"
               onPress={handleRegister}
               loading={loading}
+              variant="primary"
             />
 
             <TouchableOpacity
@@ -218,97 +321,3 @@ export default function RegisterScreen({ navigation }) {
     </GradientBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  keyboardView: { flex: 1 },
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  header: {
-    marginBottom: 30,
-    marginTop: 20,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  appTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-  },
-  formContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  inputGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
-    height: 56,
-  },
-  inputIcon: { marginRight: 12 },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#1F2937",
-    height: "100%",
-  },
-  spacer: { height: 12 },
-  errorText: {
-    color: "#EF4444",
-    fontSize: 12,
-    marginLeft: 4,
-    marginTop: -8,
-    marginBottom: 12,
-  },
-  generalErrorBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  generalErrorText: {
-    color: "#EF4444",
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  footerLink: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  footerText: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  boldText: {
-    color: "#4F46E5",
-    fontWeight: "bold",
-  },
-});

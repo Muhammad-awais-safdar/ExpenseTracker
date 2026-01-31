@@ -93,13 +93,13 @@ export default function SettingsScreen({ navigation }) {
           label: "Profile Information",
           icon: "person-outline",
           action: () => navigation.navigate("Profile"),
-          color: "#4F46E5",
+          color: colors.primary,
         },
         {
           label: "Change Password",
           icon: "lock-closed-outline",
           action: () => navigation.navigate("ChangePassword"),
-          color: "#10B981",
+          color: colors.success,
         },
       ],
     },
@@ -110,7 +110,7 @@ export default function SettingsScreen({ navigation }) {
           label: "Biometric Login",
           icon: "finger-print-outline",
           action: () => handleBiometricToggle(!isBiometricEnabled),
-          color: "#8B5CF6",
+          color: "#8B5CF6", // Violet
           rightElement: isBiometricSupported ? (
             <Switch
               value={isBiometricEnabled}
@@ -118,7 +118,7 @@ export default function SettingsScreen({ navigation }) {
               trackColor={{ false: "#767577", true: "#8B5CF6" }}
             />
           ) : (
-            <Text style={{ color: "#9CA3AF", fontSize: 12 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
               Not Supported
             </Text>
           ),
@@ -132,7 +132,7 @@ export default function SettingsScreen({ navigation }) {
           label: "Dark Mode",
           icon: "moon-outline",
           action: toggleTheme,
-          color: "#6366F1",
+          color: "#6366F1", // Indigo
           rightElement: (
             <Switch
               value={isDarkMode}
@@ -150,29 +150,182 @@ export default function SettingsScreen({ navigation }) {
           label: "Export Transactions (CSV)",
           icon: "download-outline",
           action: handleExport,
-          color: "#4F46E5",
+          color: colors.primary,
         },
         {
           label: "Recurring Transactions",
           icon: "repeat-outline",
           action: () => navigation.navigate("RecurringTransactions"),
-          color: "#EC4899",
+          color: "#EC4899", // Pink
         },
         {
           label: "Notifications (Coming Soon)",
           icon: "notifications-outline",
           action: () => {}, // Placeholder
-          color: "#F59E0B",
+          color: colors.warning,
         },
         {
           label: "About",
           icon: "information-circle-outline",
           action: () => Alert.alert("About", "Expense Tracker v1.0.0"),
-          color: "#6B7280",
+          color: colors.textSecondary,
         },
       ],
     },
   ];
+
+  const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    header: {
+      alignItems: "center",
+      padding: 30,
+      backgroundColor: colors.card,
+      marginBottom: 20,
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primary,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    avatarText: {
+      fontSize: 30,
+      fontWeight: "bold",
+      color: "#fff",
+    },
+    userName: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: colors.text,
+    },
+    userEmail: {
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    content: {
+      paddingHorizontal: 20,
+    },
+    section: {
+      marginBottom: 25,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.textSecondary,
+      marginBottom: 10,
+      marginLeft: 5,
+      textTransform: "uppercase",
+    },
+    sectionContent: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    lastItem: {
+      borderBottomWidth: 0,
+    },
+    iconBox: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
+    },
+    menuText: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+    },
+    logoutButton: {
+      marginTop: 10,
+      backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.2)" : "#FEE2E2",
+      padding: 15,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    logoutText: {
+      color: colors.danger,
+      fontWeight: "bold",
+      fontSize: 16,
+    },
+    version: {
+      textAlign: "center",
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginTop: 20,
+      marginBottom: 30,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      padding: 20,
+      borderRadius: 12,
+      width: "80%",
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 10,
+      color: colors.text,
+    },
+    modalText: {
+      color: colors.textSecondary,
+      marginBottom: 15,
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 20,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.inputBackground,
+    },
+    modalButtons: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+    },
+    modalButtonCancel: {
+      padding: 10,
+      marginRight: 10,
+    },
+    modalButtonConfirm: {
+      backgroundColor: colors.primary,
+      padding: 10,
+      borderRadius: 8,
+    },
+    modalButtonTextCancel: {
+      color: colors.textSecondary,
+      fontWeight: "600",
+    },
+    modalButtonTextConfirm: {
+      color: "#fff",
+      fontWeight: "600",
+    },
+  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -218,7 +371,7 @@ export default function SettingsScreen({ navigation }) {
                       <Ionicons
                         name="chevron-forward"
                         size={20}
-                        color="#9CA3AF"
+                        color={colors.textSecondary}
                       />
                     )}
                   </TouchableOpacity>
@@ -243,6 +396,7 @@ export default function SettingsScreen({ navigation }) {
                 <TextInput
                   style={styles.modalInput}
                   placeholder="Password"
+                  placeholderTextColor={colors.placeholder}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -274,154 +428,3 @@ export default function SettingsScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    alignItems: "center",
-    padding: 30,
-    backgroundColor: "#fff",
-    marginBottom: 20,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#4F46E5",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  avatarText: {
-    fontSize: 30,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1F2937",
-  },
-  userEmail: {
-    color: "#6B7280",
-    marginTop: 2,
-  },
-  content: {
-    paddingHorizontal: 20,
-  },
-  section: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#6B7280", // Keep gray for section headers
-    marginBottom: 10,
-    marginLeft: 5,
-    textTransform: "uppercase",
-  },
-  sectionContent: {
-    // backgroundColor handled inline
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  lastItem: {
-    borderBottomWidth: 0,
-  },
-  iconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 16,
-    color: "#374151",
-  },
-  logoutButton: {
-    marginTop: 10,
-    backgroundColor: "#FEE2E2",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "#EF4444",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  version: {
-    textAlign: "center",
-    color: "#9CA3AF",
-    fontSize: 12,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    width: "80%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#1F2937",
-  },
-  modalText: {
-    color: "#6B7280",
-    marginBottom: 15,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  modalButtonCancel: {
-    padding: 10,
-    marginRight: 10,
-  },
-  modalButtonConfirm: {
-    backgroundColor: "#4F46E5",
-    padding: 10,
-    borderRadius: 8,
-  },
-  modalButtonTextCancel: {
-    color: "#6B7280",
-    fontWeight: "600",
-  },
-  modalButtonTextConfirm: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-});

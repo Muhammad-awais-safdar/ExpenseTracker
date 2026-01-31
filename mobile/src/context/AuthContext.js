@@ -41,9 +41,12 @@ export const AuthProvider = ({ children }) => {
 
   const loadStorageData = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem("token");
-      const storedUser = await AsyncStorage.getItem("user");
-      const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
+      // Parallel execution for faster startup
+      const [storedToken, storedUser, bioEnabled] = await Promise.all([
+        AsyncStorage.getItem("token"),
+        AsyncStorage.getItem("user"),
+        AsyncStorage.getItem("biometric_enabled"),
+      ]);
 
       if (bioEnabled === "true") {
         setIsBiometricEnabled(true);
@@ -55,7 +58,7 @@ export const AuthProvider = ({ children }) => {
         api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
       }
     } catch (e) {
-      console.log("Failed to load auth data", e);
+      console.error("Failed to load auth data", e);
     } finally {
       setIsSplashLoading(false);
     }

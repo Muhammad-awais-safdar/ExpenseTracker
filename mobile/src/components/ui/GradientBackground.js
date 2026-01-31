@@ -1,24 +1,23 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
+import { useTheme } from "../../context/ThemeContext";
 
-export default function GradientBackground({ children }) {
+export default function GradientBackground({ children, style }) {
+  const { isDarkMode, colors } = useTheme();
+
+  const lightColors = ["#4F46E5", "#3730A3"]; // Indigo to darker indigo
+  const darkColors = [colors.background, "#1F2937"]; // Dark gray/blue for night
+
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <LinearGradient
-        colors={["#4F46E5", "#312E81"]}
-        style={StyleSheet.absoluteFillObject}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-      {/* Decorative circles/blobs */}
-      <View style={[styles.blob, styles.blob1]} />
-      <View style={[styles.blob, styles.blob2]} />
-
+    <LinearGradient
+      colors={isDarkMode ? darkColors : lightColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, style]}
+    >
       {children}
-    </View>
+    </LinearGradient>
   );
 }
 

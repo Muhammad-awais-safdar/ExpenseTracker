@@ -11,8 +11,10 @@ import {
 import ExpenseService from "../services/expenseService";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ExpensesScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,11 +44,73 @@ export default function ExpensesScreen({ navigation }) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#EF4444" />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.danger} />
       </View>
     );
   }
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    item: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      padding: 16,
+      borderRadius: 16,
+      marginBottom: 12,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 5,
+      elevation: 2,
+    },
+    iconBox: {
+      width: 40,
+      height: 40,
+      backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.1)" : "#FEE2E2",
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 15,
+    },
+    info: { flex: 1 },
+    desc: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    category: { fontSize: 12, color: colors.textSecondary },
+    amount: { fontSize: 16, fontWeight: "bold", color: colors.danger },
+
+    emptyContainer: { alignItems: "center", marginTop: 50 },
+    emptyText: { color: colors.textSecondary, marginTop: 10, fontSize: 16 },
+
+    fab: {
+      position: "absolute",
+      bottom: 30,
+      right: 30,
+      backgroundColor: colors.danger,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: colors.danger,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 5,
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -57,14 +121,18 @@ export default function ExpensesScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#EF4444"
+            tintColor={colors.danger}
           />
         }
         contentContainerStyle={{ padding: 20 }}
         renderItem={({ item }) => (
           <View style={styles.item}>
             <View style={styles.iconBox}>
-              <Ionicons name="receipt-outline" size={20} color="#EF4444" />
+              <Ionicons
+                name="receipt-outline"
+                size={20}
+                color={colors.danger}
+              />
             </View>
             <View style={styles.info}>
               <Text style={styles.desc}>{item.description}</Text>
@@ -78,7 +146,11 @@ export default function ExpensesScreen({ navigation }) {
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="receipt-outline" size={50} color="#ccc" />
+            <Ionicons
+              name="receipt-outline"
+              size={50}
+              color={colors.textSecondary}
+            />
             <Text style={styles.emptyText}>No expenses yet</Text>
           </View>
         }
@@ -93,53 +165,3 @@ export default function ExpensesScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#FEE2E2",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  info: { flex: 1 },
-  desc: { fontSize: 16, fontWeight: "600", color: "#1F2937", marginBottom: 4 },
-  category: { fontSize: 12, color: "#6B7280" },
-  amount: { fontSize: 16, fontWeight: "bold", color: "#EF4444" },
-
-  emptyContainer: { alignItems: "center", marginTop: 50 },
-  emptyText: { color: "#9CA3AF", marginTop: 10, fontSize: 16 },
-
-  fab: {
-    position: "absolute",
-    bottom: 30,
-    right: 30,
-    backgroundColor: "#EF4444",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#EF4444",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-});

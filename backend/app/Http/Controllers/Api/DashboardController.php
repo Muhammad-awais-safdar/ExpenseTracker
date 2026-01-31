@@ -59,6 +59,30 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
+        // 6-Month Trend Data
+        $trends = collect(range(0, 5))->map(function ($i) use ($user) {
+            $date = now()->subMonths($i);
+            $month = $date->format('M'); // Jan, Feb
+            $monthNum = $date->month;
+            $year = $date->year;
+
+            $income = $user->incomes()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->sum('amount');
+
+            $expense = $user->expenses()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $monthNum)
+                ->sum('amount');
+
+            return [
+                'month' => $month,
+                'income' => $income,
+                'expense' => $expense
+            ];
+        })->reverse()->values(); // Reverse to show Oldest -> Newest
+
         return response()->json([
             'summary' => [
                 'total_income' => $totalIncome,
@@ -72,7 +96,8 @@ class DashboardController extends Controller
             'loans' => [
                 'given_pending' => $loansGiven,
                 'taken_pending' => $loansTaken
-            ]
+            ],
+            'trends' => $trends
         ]);
     }
 }

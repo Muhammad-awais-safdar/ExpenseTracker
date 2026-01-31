@@ -12,6 +12,7 @@ import IncomeService from "../services/incomeService";
 import CategoryService from "../services/categoryService";
 import MemoryCache from "../utils/memoryCache";
 import { useSync } from "../context/SyncContext";
+import { useTheme } from "../context/ThemeContext";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
@@ -26,6 +27,7 @@ export default function AddIncomeScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
   const { isOnline, addToQueue } = useSync();
+  const { colors, isDarkMode } = useTheme();
 
   useEffect(() => {
     loadCategories();
@@ -39,7 +41,13 @@ export default function AddIncomeScreen({ navigation }) {
       if (incomeCategories.length > 0)
         setSelectedCategory(incomeCategories[0].id);
     } catch (error) {
-      Alert.alert("Error", "Failed to load categories");
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: "Failed to load categories",
+        type: "error",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoadingCats(false);
     }
@@ -114,6 +122,45 @@ export default function AddIncomeScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, padding: 20, backgroundColor: colors.background },
+    inputGroup: { marginBottom: 20 },
+    label: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    input: {
+      backgroundColor: colors.inputBackground,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      padding: 15,
+      borderRadius: 12,
+      fontSize: 16,
+      color: colors.text,
+    },
+
+    categoryContainer: { flexDirection: "row", paddingTop: 5 },
+    categoryChip: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 25,
+      marginRight: 10,
+    },
+    selectedChip: {
+      backgroundColor: colors.success,
+      borderColor: colors.success,
+    },
+    chipText: { color: colors.text, fontWeight: "500" },
+    selectedChipText: { color: "#fff" },
+
+    submitBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  });
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.inputGroup}>
@@ -124,7 +171,7 @@ export default function AddIncomeScreen({ navigation }) {
           onChangeText={setAmount}
           keyboardType="numeric"
           placeholder="0.00"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.placeholder}
           autoFocus
         />
       </View>
@@ -136,7 +183,7 @@ export default function AddIncomeScreen({ navigation }) {
           value={source}
           onChangeText={setSource}
           placeholder="e.g. Salary, Freelance"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.placeholder}
         />
       </View>
 
@@ -145,7 +192,7 @@ export default function AddIncomeScreen({ navigation }) {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Category</Text>
         {loadingCats ? (
-          <ActivityIndicator color="#10B981" />
+          <ActivityIndicator color={colors.success} />
         ) : (
           <ScrollView
             horizontal
@@ -179,45 +226,9 @@ export default function AddIncomeScreen({ navigation }) {
         title="Save Income"
         onPress={handleSubmit}
         loading={loading}
-        variant="primary" // Re-using primary, but maybe we should add 'success' variant to ModernButton later. For now primary (indigo) is fine or we can customize.
-        // Actually, let's stick to the theme. Income was Green. ModernButton default is Indigo.
-        // I will update ModernButton to support custom colors or just stick to Indigo for consistency?
-        // Let's stick to Indigo for consistency for now, or add a 'success' variant?
-        // Quick check: ModernButton supports 'dange' and 'secondary'.
-        // I'll stick to default for now for unified look, or I'll add 'success' variant later.
+        style={{ backgroundColor: colors.success }} // Override for Income Green
       />
       <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F9FAFB" },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: "600", color: "#374151", marginBottom: 8 },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 15,
-    borderRadius: 12,
-    fontSize: 16,
-    color: "#1F2937",
-  },
-
-  categoryContainer: { flexDirection: "row", paddingTop: 5 },
-  categoryChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  selectedChip: { backgroundColor: "#10B981", borderColor: "#10B981" },
-  chipText: { color: "#374151", fontWeight: "500" },
-  selectedChipText: { color: "#fff" },
-
-  submitBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-});

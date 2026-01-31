@@ -11,8 +11,10 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import AuthService from "../services/authService";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ProfileScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const { user, setUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -44,6 +46,45 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    form: {
+      padding: 20,
+      marginTop: 20,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 5,
+    },
+    input: {
+      backgroundColor: colors.inputBackground,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      marginBottom: 20,
+      color: colors.text,
+    },
+    button: {
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: "center",
+      marginTop: 10,
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.form}>
@@ -53,6 +94,7 @@ export default function ProfileScreen({ navigation }) {
           value={name}
           onChangeText={setName}
           placeholder="Enter your name"
+          placeholderTextColor={colors.placeholder}
         />
 
         <Text style={styles.label}>Email Address</Text>
@@ -61,6 +103,7 @@ export default function ProfileScreen({ navigation }) {
           value={email}
           onChangeText={setEmail}
           placeholder="Enter your email"
+          placeholderTextColor={colors.placeholder}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -80,41 +123,3 @@ export default function ProfileScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  form: {
-    padding: 20,
-    marginTop: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 5,
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});

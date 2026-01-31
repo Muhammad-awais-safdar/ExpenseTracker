@@ -80,6 +80,9 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4F46E5" />
+        <Text style={{ marginTop: 10, color: "#6B7280" }}>
+          Connecting to server...
+        </Text>
       </View>
     );
   }
@@ -91,7 +94,7 @@ export default function HomeScreen({ navigation }) {
           styles.actionBtn,
           {
             backgroundColor: colors.card,
-            shadowColor: isDarkMode ? "#000" : "#ccc",
+            shadowColor: colors.shadow,
           },
         ]}
         onPress={() => navigation.navigate(route)}
@@ -108,10 +111,12 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "light-content"} />
+      <StatusBar barStyle="light-content" />
       <LinearGradient
         colors={
-          isDarkMode ? [colors.card, colors.background] : ["#4F46E5", "#3730A3"]
+          isDarkMode
+            ? [colors.navBackground, colors.background]
+            : [colors.primary, "#3730A3"]
         }
         style={styles.headerBackground}
       >
@@ -145,11 +150,9 @@ export default function HomeScreen({ navigation }) {
             styles.balanceCard,
             {
               backgroundColor: isDarkMode
-                ? "rgba(255,255,255,0.05)"
+                ? colors.surfaceHighlight
                 : "rgba(255,255,255,0.1)",
-              borderColor: isDarkMode
-                ? "rgba(255,255,255,0.1)"
-                : "rgba(255,255,255,0.2)",
+              borderColor: isDarkMode ? colors.border : "rgba(255,255,255,0.2)",
               opacity: balanceAnim,
               transform: [
                 {
@@ -187,10 +190,14 @@ export default function HomeScreen({ navigation }) {
               <View
                 style={[
                   styles.arrowIcon,
-                  { backgroundColor: "rgba(16, 185, 129, 0.2)" },
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(16, 185, 129, 0.1)"
+                      : "rgba(16, 185, 129, 0.2)",
+                  },
                 ]}
               >
-                <Ionicons name="arrow-down" size={12} color="#10B981" />
+                <Ionicons name="arrow-down" size={12} color={colors.success} />
               </View>
               <Text
                 style={[
@@ -206,7 +213,7 @@ export default function HomeScreen({ navigation }) {
                 styles.divider,
                 {
                   backgroundColor: isDarkMode
-                    ? "rgba(255,255,255,0.1)"
+                    ? colors.border
                     : "rgba(255,255,255,0.2)",
                 },
               ]}
@@ -215,10 +222,14 @@ export default function HomeScreen({ navigation }) {
               <View
                 style={[
                   styles.arrowIcon,
-                  { backgroundColor: "rgba(239, 68, 68, 0.2)" },
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(239, 68, 68, 0.1)"
+                      : "rgba(239, 68, 68, 0.2)",
+                  },
                 ]}
               >
-                <Ionicons name="arrow-up" size={12} color="#EF4444" />
+                <Ionicons name="arrow-up" size={12} color={colors.danger} />
               </View>
               <Text
                 style={[
@@ -255,31 +266,31 @@ export default function HomeScreen({ navigation }) {
             <QuickAction
               title="Add Expense"
               icon="remove-circle"
-              color="#EF4444"
+              color={colors.danger}
               route="AddExpense"
             />
             <QuickAction
               title="Add Income"
               icon="add-circle"
-              color="#10B981"
+              color={colors.success}
               route="AddIncome"
             />
             <QuickAction
               title="Loans"
               icon="swap-horizontal"
-              color="#F59E0B"
+              color={colors.warning}
               route="Loans"
             />
             <QuickAction
               title="Budgets"
               icon="pie-chart"
-              color="#8B5CF6"
+              color={colors.info}
               route="Budgets"
             />
             <QuickAction
               title="Trends"
               icon="bar-chart"
-              color="#3B82F6"
+              color={colors.primary}
               route="Analytics"
             />
           </View>
@@ -306,7 +317,7 @@ export default function HomeScreen({ navigation }) {
                   styles.transactionItem,
                   {
                     backgroundColor: colors.card,
-                    shadowColor: isDarkMode ? "#000" : "#000",
+                    shadowColor: colors.shadow,
                   },
                 ]}
               >
@@ -317,10 +328,10 @@ export default function HomeScreen({ navigation }) {
                       backgroundColor:
                         item.type === "expense"
                           ? isDarkMode
-                            ? "#371B1B"
+                            ? "rgba(239, 68, 68, 0.1)"
                             : "#FEE2E2"
                           : isDarkMode
-                            ? "#064E3B"
+                            ? "rgba(16, 185, 129, 0.1)"
                             : "#D1FAE5",
                     },
                   ]}
@@ -332,7 +343,9 @@ export default function HomeScreen({ navigation }) {
                         : "wallet-outline"
                     }
                     size={20}
-                    color={item.type === "expense" ? "#EF4444" : "#10B981"}
+                    color={
+                      item.type === "expense" ? colors.danger : colors.success
+                    }
                   />
                 </View>
                 <View style={styles.transactionInfo}>
@@ -340,14 +353,19 @@ export default function HomeScreen({ navigation }) {
                     {item.category?.name ||
                       (item.type === "income" ? item.source : item.description)}
                   </Text>
-                  <Text style={styles.tDate}>
+                  <Text style={[styles.tDate, { color: colors.textSecondary }]}>
                     {new Date(item.date).toLocaleDateString()}
                   </Text>
                 </View>
                 <Text
                   style={[
                     styles.tAmount,
-                    item.type === "expense" ? styles.negative : styles.positive,
+                    {
+                      color:
+                        item.type === "expense"
+                          ? colors.danger
+                          : colors.success,
+                    },
                   ]}
                 >
                   {item.type === "expense" ? "-" : "+"}Rs {item.amount}
@@ -355,7 +373,9 @@ export default function HomeScreen({ navigation }) {
               </View>
             ))
           ) : (
-            <Text style={styles.emptyText}>No recent transactions</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              No recent transactions
+            </Text>
           )}
         </Animated.View>
       </ScrollView>
@@ -364,7 +384,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F3F4F6" },
+  container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   headerBackground: {
@@ -381,23 +401,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   greeting: { color: "rgba(255,255,255,0.8)", fontSize: 14 },
-  username: { color: "#fff", fontSize: 24, fontWeight: "bold" },
+  username: { fontSize: 24, fontWeight: "bold" },
   logoutBtn: { padding: 5 },
 
   balanceCard: {
-    backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
   },
   balanceLabel: {
-    color: "rgba(255,255,255,0.8)",
     fontSize: 14,
     marginBottom: 5,
   },
   balanceValue: {
-    color: "#fff",
     fontSize: 36,
     fontWeight: "bold",
     marginBottom: 15,
@@ -405,11 +421,10 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: "row", alignItems: "center" },
   stat: { flexDirection: "row", alignItems: "center", marginRight: 15 },
   arrowIcon: { padding: 4, borderRadius: 10, marginRight: 6 },
-  statValue: { color: "#fff", fontWeight: "600" },
+  statValue: { fontWeight: "600" },
   divider: {
     width: 1,
     height: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
     marginRight: 15,
   },
 
@@ -426,12 +441,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   actionBtn: {
-    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -439,7 +452,7 @@ const styles = StyleSheet.create({
     width: "100%", // Fill wrapper
   },
   actionIcon: { padding: 8, borderRadius: 10, marginRight: 10 },
-  actionBtnText: { fontWeight: "600", color: "#1F2937", fontSize: 14 },
+  actionBtnText: { fontWeight: "600", fontSize: 14 },
 
   sectionHeader: {
     flexDirection: "row",
@@ -447,17 +460,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#1F2937" },
-  seeAll: { color: "#4F46E5", fontWeight: "600" },
+  sectionTitle: { fontSize: 18, fontWeight: "bold" },
+  seeAll: { fontWeight: "600" },
 
   transactionItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -475,12 +486,9 @@ const styles = StyleSheet.create({
   tTitle: {
     fontWeight: "600",
     fontSize: 16,
-    color: "#1F2937",
     marginBottom: 2,
   },
-  tDate: { color: "#9CA3AF", fontSize: 12 },
+  tDate: { fontSize: 12 },
   tAmount: { fontWeight: "bold", fontSize: 16 },
-  positive: { color: "#10B981" },
-  negative: { color: "#EF4444" },
-  emptyText: { textAlign: "center", color: "#9CA3AF", marginTop: 20 },
+  emptyText: { textAlign: "center", marginTop: 20 },
 });

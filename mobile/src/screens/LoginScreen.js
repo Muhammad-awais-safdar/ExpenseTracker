@@ -10,6 +10,7 @@ import {
   Animated,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import GradientBackground from "../components/ui/GradientBackground";
 import ModernButton from "../components/ui/ModernButton";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +19,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, isBiometricEnabled, loginWithBiometrics } = useAuth();
+  const { colors, isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -38,7 +40,6 @@ export default function LoginScreen({ navigation }) {
     try {
       await loginWithBiometrics();
     } catch (e) {
-      // Fail silently or show error toast, user can still use password
       console.log("Bio login failed or cancelled");
     }
   };
@@ -101,6 +102,117 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    keyboardView: { flex: 1 },
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    header: {
+      alignItems: "center",
+      marginBottom: 40,
+    },
+    iconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: isDarkMode ? colors.surface : "#fff",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      elevation: 5,
+    },
+    appTitle: {
+      fontSize: 28,
+      fontWeight: "bold",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+    formContainer: {
+      backgroundColor: isDarkMode ? colors.surface : "#fff",
+      borderRadius: 24,
+      padding: 24,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    inputGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.inputBackground,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      height: 56,
+    },
+    inputIcon: { marginRight: 12 },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      height: "100%",
+    },
+    spacer: { height: 12 },
+    errorText: {
+      color: colors.danger,
+      fontSize: 12,
+      marginLeft: 4,
+      marginTop: -8,
+      marginBottom: 12,
+    },
+    generalErrorBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2",
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    generalErrorText: {
+      color: colors.danger,
+      marginLeft: 8,
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    footerLink: {
+      marginTop: 20,
+      alignItems: "center",
+    },
+    footerText: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    boldText: {
+      color: colors.primary,
+      fontWeight: "bold",
+    },
+    bioButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 15,
+      padding: 10,
+    },
+    bioText: {
+      color: colors.primary,
+      fontWeight: "600",
+      marginLeft: 8,
+    },
+  });
+
   return (
     <GradientBackground>
       <KeyboardAvoidingView
@@ -119,7 +231,11 @@ export default function LoginScreen({ navigation }) {
             ]}
           >
             <View style={styles.iconCircle}>
-              <Ionicons name="wallet-outline" size={40} color="#4F46E5" />
+              <Ionicons
+                name="wallet-outline"
+                size={40}
+                color={colors.primary}
+              />
             </View>
             <Text style={styles.appTitle}>ExpenseTracker</Text>
             <Text style={styles.subtitle}>Welcome back!</Text>
@@ -136,13 +252,13 @@ export default function LoginScreen({ navigation }) {
               <Ionicons
                 name="mail-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Email Address"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -157,13 +273,13 @@ export default function LoginScreen({ navigation }) {
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
-                color="#9CA3AF"
+                color={colors.placeholder}
                 style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 autoCapitalize="none"
@@ -176,7 +292,7 @@ export default function LoginScreen({ navigation }) {
 
             {errors.general && (
               <View style={styles.generalErrorBox}>
-                <Ionicons name="alert-circle" size={20} color="#EF4444" />
+                <Ionicons name="alert-circle" size={20} color={colors.danger} />
                 <Text style={styles.generalErrorText}>{errors.general[0]}</Text>
               </View>
             )}
@@ -187,6 +303,7 @@ export default function LoginScreen({ navigation }) {
               title="Sign In"
               onPress={handleLogin}
               loading={loading}
+              variant="primary"
             />
 
             {isBiometricEnabled && (
@@ -197,7 +314,7 @@ export default function LoginScreen({ navigation }) {
                 <Ionicons
                   name="finger-print-outline"
                   size={24}
-                  color="#4F46E5"
+                  color={colors.primary}
                 />
                 <Text style={styles.bioText}>Login with Biometrics</Text>
               </TouchableOpacity>
@@ -218,114 +335,3 @@ export default function LoginScreen({ navigation }) {
     </GradientBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  keyboardView: { flex: 1 },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  appTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-  },
-  formContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  inputGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
-    height: 56,
-  },
-  inputIcon: { marginRight: 12 },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#1F2937",
-    height: "100%",
-  },
-  spacer: { height: 12 },
-  errorText: {
-    color: "#EF4444",
-    fontSize: 12,
-    marginLeft: 4,
-    marginTop: -8,
-    marginBottom: 12,
-  },
-  generalErrorBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FEF2F2",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  generalErrorText: {
-    color: "#EF4444",
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  footerLink: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  footerText: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  boldText: {
-    color: "#4F46E5",
-    fontWeight: "bold",
-  },
-  bioButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 15,
-    padding: 10,
-  },
-  bioText: {
-    color: "#4F46E5",
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-});

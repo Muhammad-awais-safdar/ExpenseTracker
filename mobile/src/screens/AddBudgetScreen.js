@@ -13,6 +13,7 @@ import MemoryCache from "../utils/memoryCache";
 import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
+import { useTheme } from "../context/ThemeContext";
 
 export default function AddBudgetScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -25,6 +26,7 @@ export default function AddBudgetScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { colors, isDarkMode } = useTheme();
 
   useEffect(() => {
     loadCategories();
@@ -39,7 +41,7 @@ export default function AddBudgetScreen({ navigation }) {
       if (expenseCategories.length > 0)
         setSelectedCategory(expenseCategories[0].id);
     } catch (error) {
-      Alert.alert("Error", "Failed to load categories");
+      // alert("Error"); // Silent fail or retry
     }
   };
 
@@ -103,6 +105,57 @@ export default function AddBudgetScreen({ navigation }) {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, padding: 20, backgroundColor: colors.background },
+    label: {
+      fontSize: 16,
+      fontWeight: "bold",
+      marginTop: 15,
+      marginBottom: 5,
+      color: colors.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      padding: 12,
+      borderRadius: 8,
+      fontSize: 16,
+      backgroundColor: colors.inputBackground,
+      color: colors.text,
+    },
+
+    typeRow: { flexDirection: "row", marginBottom: 10 },
+    typeBtn: {
+      flex: 1,
+      padding: 15,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: "center",
+      marginHorizontal: 5,
+      borderRadius: 10,
+      backgroundColor: colors.surface,
+    },
+    typeBtnActive: { backgroundColor: colors.info, borderColor: colors.info },
+    typeText: { fontWeight: "bold", color: colors.textSecondary },
+    typeTextActive: { color: "#fff" },
+
+    categoryContainer: { flexDirection: "row", marginVertical: 10 },
+    categoryChip: {
+      padding: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 20,
+      marginRight: 10,
+      marginBottom: 5,
+      backgroundColor: colors.surface,
+    },
+    selectedChip: { backgroundColor: colors.info, borderColor: colors.info },
+    chipText: { color: colors.text },
+    selectedChipText: { color: "#fff" },
+
+    dateRow: { flexDirection: "row", justifyContent: "space-between" },
+  });
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.label}>Period</Text>
@@ -142,6 +195,7 @@ export default function AddBudgetScreen({ navigation }) {
         onChangeText={setAmount}
         keyboardType="numeric"
         placeholder="0.00"
+        placeholderTextColor={colors.placeholder}
       />
 
       <Text style={styles.label}>Category to Track</Text>
@@ -185,9 +239,13 @@ export default function AddBudgetScreen({ navigation }) {
         <View style={{ flex: 1, marginLeft: 5 }}>
           <Text style={styles.label}>End Date</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: "#F3F4F6" }]}
+            style={[
+              styles.input,
+              { backgroundColor: colors.inputBackground, opacity: 0.7 },
+            ]}
             value={endDate}
             editable={false}
+            placeholderTextColor={colors.placeholder}
           />
         </View>
       </View>
@@ -196,60 +254,10 @@ export default function AddBudgetScreen({ navigation }) {
         title="Set Budget"
         onPress={handleSubmit}
         loading={loading}
+        style={{ backgroundColor: colors.info, marginTop: 30 }}
       />
 
       <CustomAlert {...alertConfig} />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  label: { fontSize: 16, fontWeight: "bold", marginTop: 15, marginBottom: 5 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    borderRadius: 8,
-    fontSize: 16,
-    color: "#333",
-  },
-
-  typeRow: { flexDirection: "row", marginBottom: 10 },
-  typeBtn: {
-    flex: 1,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    alignItems: "center",
-    marginHorizontal: 5,
-    borderRadius: 10,
-  },
-  typeBtnActive: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
-  typeText: { fontWeight: "bold", color: "#666" },
-  typeTextActive: { color: "#fff" },
-
-  categoryContainer: { flexDirection: "row", marginVertical: 10 },
-  categoryChip: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 20,
-    marginRight: 10,
-    marginBottom: 5,
-  },
-  selectedChip: { backgroundColor: "#F59E0B", borderColor: "#F59E0B" },
-  chipText: { color: "#333" },
-  selectedChipText: { color: "#fff" },
-
-  dateRow: { flexDirection: "row", justifyContent: "space-between" },
-
-  submitBtn: {
-    backgroundColor: "#F59E0B",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 30,
-    alignItems: "center",
-  },
-  submitBtnText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-});
