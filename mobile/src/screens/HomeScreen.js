@@ -276,6 +276,12 @@ export default function HomeScreen({ navigation }) {
               color="#8B5CF6"
               route="Budgets"
             />
+            <QuickAction
+              title="Trends"
+              icon="bar-chart"
+              color="#3B82F6"
+              route="Analytics"
+            />
           </View>
 
           {/* Recent Transactions */}

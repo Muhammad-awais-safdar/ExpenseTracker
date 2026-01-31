@@ -17,6 +17,7 @@ import AddLoanScreen from "../screens/AddLoanScreen";
 import BudgetsScreen from "../screens/BudgetsScreen";
 import AddBudgetScreen from "../screens/AddBudgetScreen";
 import AllTransactionsScreen from "../screens/AllTransactionsScreen"; // Import New Screen
+import AnalyticsScreen from "../screens/AnalyticsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
@@ -106,6 +107,11 @@ function AppContent() {
               name="AllTransactions"
               component={AllTransactionsScreen}
               options={{ title: "All Transactions" }}
+            />
+            <Stack.Screen
+              name="Analytics"
+              component={AnalyticsScreen}
+              options={{ title: "Financial Trends" }}
             />
             <Stack.Screen
               name="Settings"

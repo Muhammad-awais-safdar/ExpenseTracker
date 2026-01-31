@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../services/api"; // Assuming you have an api instance
+import api from "../api/axios"; // Corrected import path
 import { Alert } from "react-native";
 
 const SyncContext = createContext();
