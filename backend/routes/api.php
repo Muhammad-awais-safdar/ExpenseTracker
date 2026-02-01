@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\RecurringTransactionController;
+use App\Http\Controllers\Api\SavingGoalController;
 
 Route::post('/mobile/register', [MobileAuthController::class, 'register']);
 Route::post('/mobile/login', [MobileAuthController::class, 'login']);
@@ -47,4 +48,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Recurring
     Route::apiResource('recurring', RecurringTransactionController::class);
+
+    // Savings
+    Route::apiResource('savings', SavingGoalController::class);
+    Route::post('/savings/{id}/transaction', [SavingGoalController::class, 'addTransaction']);
 });

@@ -436,9 +436,14 @@ export default function AllTransactionsScreen({ navigation }) {
               </View>
               <View style={styles.info}>
                 <Text style={styles.title}>
-                  {item.category?.name || item.title || "Transaction"}
+                  {item.category?.name ||
+                    (item.type === "income" ? "Income" : "Expense")}
                 </Text>
                 <Text style={styles.date}>
+                  {item.type === "income"
+                    ? item.source || ""
+                    : item.description || ""}
+                  {item.source || item.description ? " • " : ""}
                   {new Date(item.date).toLocaleDateString()}
                 </Text>
               </View>

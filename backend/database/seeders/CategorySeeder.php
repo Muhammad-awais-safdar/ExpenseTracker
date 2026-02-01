@@ -34,6 +34,7 @@ class CategorySeeder extends Seeder
             ['name' => 'Health', 'type' => 'expense', 'icon' => 'medkit', 'color' => '#FF33F3'],
             ['name' => 'Shopping', 'type' => 'expense', 'icon' => 'cart', 'color' => '#25b917'],
             ['name' => 'Loan', 'type' => 'expense', 'icon' => 'hand-holding-usd', 'color' => '#e7c429ff'],
+            ['name' => 'Other', 'type' => 'expense', 'icon' => 'question', 'color' => '#808080'],
 
             
             // Income

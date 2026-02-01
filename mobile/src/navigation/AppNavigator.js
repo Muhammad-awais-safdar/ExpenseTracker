@@ -23,6 +23,9 @@ import ProfileScreen from "../screens/ProfileScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import RecurringTransactionsScreen from "../screens/RecurringTransactionsScreen";
 import AddRecurringScreen from "../screens/AddRecurringScreen";
+import SavingsScreen from "../screens/SavingsScreen";
+import AddSavingGoalScreen from "../screens/AddSavingGoalScreen";
+import SavingGoalDetailScreen from "../screens/SavingGoalDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -137,6 +140,26 @@ function AppContent() {
               name="AddRecurring"
               component={AddRecurringScreen}
               options={{ title: "New Recurring Rule" }}
+            />
+            <Stack.Screen
+              name="Savings"
+              component={SavingsScreen}
+              options={{ title: "Savings Goals" }}
+            />
+            <Stack.Screen
+              name="AddSavingGoal"
+              component={AddSavingGoalScreen}
+              options={{ title: "New Goal" }}
+            />
+            <Stack.Screen
+              name="SavingGoalDetail"
+              component={SavingGoalDetailScreen}
+              options={{
+                title: "Goal Details",
+                headerTintColor: "#fff",
+                headerTransparent: true,
+                headerTitle: "",
+              }}
             />
           </>
         ) : (

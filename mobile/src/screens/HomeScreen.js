@@ -349,6 +349,12 @@ export default function HomeScreen({ navigation }) {
               color={colors.primary}
               route="Analytics"
             />
+            <QuickAction
+              title="Savings"
+              icon="wallet"
+              color="#8B5CF6"
+              route="Savings"
+            />
           </View>
 
           {/* Recent Transactions */}
