@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
+    private function transformLoan($loan)
+    {
+        $loan->amount = (float) $loan->amount;
+        return $loan;
+    }
+
     public function index(Request $request)
     {
-        return $request->user()->loans()->latest()->get();
+        $loans = $request->user()->loans()->latest()->get();
+        return $loans->map(fn($item) => $this->transformLoan($item));
     }
 
     public function store(Request $request)
@@ -45,7 +52,7 @@ class LoanController extends Controller
             ]);
         }
 
-        return response()->json($loan, 201);
+        return response()->json($this->transformLoan($loan), 201);
     }
 
     public function show(Request $request, Loan $loan)
@@ -53,7 +60,7 @@ class LoanController extends Controller
         if ($loan->user_id !== $request->user()->id) {
             abort(403);
         }
-        return $loan;
+        return $this->transformLoan($loan);
     }
 
     public function update(Request $request, Loan $loan)
@@ -108,7 +115,7 @@ class LoanController extends Controller
         
         \Illuminate\Support\Facades\Log::info('Loan Updated', $loan->fresh()->toArray());
 
-        return $loan;
+        return $this->transformLoan($loan);
     }
 
     public function destroy(Request $request, Loan $loan)

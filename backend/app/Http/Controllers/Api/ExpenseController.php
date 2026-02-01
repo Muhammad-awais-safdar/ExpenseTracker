@@ -8,9 +8,25 @@ use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
+    private function transformExpense($expense)
+    {
+        $expense->amount = (float) $expense->amount;
+        if (!$expense->relationLoaded('category') || !$expense->category) {
+            $expense->setRelation('category', (object)[
+                'id' => 0,
+                'name' => 'Uncategorized',
+                'color' => '#808080',
+                'icon' => 'help-circle'
+            ]);
+        }
+        return $expense;
+    }
+
     public function index(Request $request)
     {
-        return $request->user()->expenses()->with('category')->latest('date')->paginate(20);
+        $expenses = $request->user()->expenses()->with('category')->latest('date')->paginate(20);
+        $expenses->getCollection()->transform(fn($item) => $this->transformExpense($item));
+        return $expenses;
     }
 
     public function store(Request $request)
@@ -23,8 +39,7 @@ class ExpenseController extends Controller
         ]);
 
         $expense = $request->user()->expenses()->create($validated);
-
-        return response()->json($expense->load('category'), 201);
+        return response()->json($this->transformExpense($expense->load('category')), 201);
     }
 
     public function show(Request $request, Expense $expense)
@@ -32,7 +47,7 @@ class ExpenseController extends Controller
         if ($expense->user_id !== $request->user()->id) {
             abort(403);
         }
-        return $expense->load('category');
+        return $this->transformExpense($expense->load('category'));
     }
 
     public function update(Request $request, Expense $expense)
@@ -49,8 +64,7 @@ class ExpenseController extends Controller
         ]);
 
         $expense->update($validated);
-
-        return $expense->load('category');
+        return $this->transformExpense($expense->load('category'));
     }
 
     public function destroy(Request $request, Expense $expense)

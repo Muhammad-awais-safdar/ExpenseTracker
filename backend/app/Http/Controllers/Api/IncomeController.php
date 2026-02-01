@@ -8,9 +8,25 @@ use Illuminate\Http\Request;
 
 class IncomeController extends Controller
 {
+    private function transformIncome($income)
+    {
+        $income->amount = (float) $income->amount;
+        if (!$income->relationLoaded('category') || !$income->category) {
+            $income->setRelation('category', (object)[
+                'id' => 0,
+                'name' => 'Uncategorized',
+                'color' => '#808080',
+                'icon' => 'help-circle'
+            ]);
+        }
+        return $income;
+    }
+
     public function index(Request $request)
     {
-        return $request->user()->incomes()->with('category')->latest('date')->paginate(20);
+        $incomes = $request->user()->incomes()->with('category')->latest('date')->paginate(20);
+        $incomes->getCollection()->transform(fn($item) => $this->transformIncome($item));
+        return $incomes;
     }
 
     public function store(Request $request)
@@ -23,8 +39,7 @@ class IncomeController extends Controller
         ]);
 
         $income = $request->user()->incomes()->create($validated);
-
-        return response()->json($income->load('category'), 201);
+        return response()->json($this->transformIncome($income->load('category')), 201);
     }
 
     public function show(Request $request, Income $income)
@@ -32,7 +47,7 @@ class IncomeController extends Controller
         if ($income->user_id !== $request->user()->id) {
             abort(403);
         }
-        return $income->load('category');
+        return $this->transformIncome($income->load('category'));
     }
 
     public function update(Request $request, Income $income)
@@ -49,8 +64,7 @@ class IncomeController extends Controller
         ]);
 
         $income->update($validated);
-
-        return $income->load('category');
+        return $this->transformIncome($income->load('category'));
     }
 
     public function destroy(Request $request, Income $income)

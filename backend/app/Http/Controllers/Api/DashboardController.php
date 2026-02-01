@@ -16,45 +16,78 @@ class DashboardController extends Controller
         $user = $request->user();
 
         // Active Loans (for display only)
-        $loansGiven = $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
-        $loansTaken = $user->loans()->where('type', 'taken')->where('status', 'pending')->sum('amount');
+        $loansGiven = (float) $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
+        $loansTaken = (float) $user->loans()->where('type', 'taken')->where('status', 'pending')->sum('amount');
         
         // Total Income & Expense (All time)
-        $totalIncome = $user->incomes()->sum('amount');
-        $totalExpense = $user->expenses()->sum('amount');
+        $totalIncome = (float) $user->incomes()->sum('amount');
+        $totalExpense = (float) $user->expenses()->sum('amount');
         
-        // Balance = Income - Expense (Loans now generate transactions, so they are included via that)
+        // Balance
         $balance = $totalIncome - $totalExpense;
 
         // Monthly Stats (Current Month)
         $currentMonth = now()->startOfMonth();
-        $monthlyIncome = $user->incomes()->where('date', '>=', $currentMonth)->sum('amount');
-        $monthlyExpense = $user->expenses()->where('date', '>=', $currentMonth)->sum('amount');
+        $monthlyIncome = (float) $user->incomes()->where('date', '>=', $currentMonth)->sum('amount');
+        $monthlyExpense = (float) $user->expenses()->where('date', '>=', $currentMonth)->sum('amount');
 
         // Category Breakdown
         $expenseByCategory = $user->expenses()
             ->select('category_id', DB::raw('sum(amount) as total'))
             ->with(['category:id,name,color,icon'])
             ->groupBy('category_id')
-            ->get();
+            ->get()
+            ->map(function($item) {
+                return [
+                    'category_id' => $item->category_id,
+                    'total' => (float) $item->total,
+                    'category' => $item->category ?? [
+                        'id' => 0,
+                        'name' => 'Uncategorized',
+                        'color' => '#808080',
+                        'icon' => 'help-circle'
+                    ]
+                ];
+            });
+
+        // Helper to format transactions safely
+        $formatTransaction = function($item, $type) {
+            $item->type = $type;
+            $item->amount = (float) $item->amount;
+            // Ensure category object exists to prevent app crash
+            if (!$item->relationLoaded('category') || !$item->category) {
+                $item->setRelation('category', (object)[
+                    'id' => 0,
+                    'name' => 'Uncategorized',
+                    'color' => '#808080',
+                    'icon' => 'help-circle'
+                ]);
+            }
+            return $item;
+        };
 
         // Recent Transactions (limit 5)
-        $recentExpenses = $user->expenses()->with('category:id,name,icon,color')->latest('date')->limit(5)->get()->map(function($item) {
-            $item->type = 'expense';
-            return $item;
-        });
-        $recentIncomes = $user->incomes()->with('category:id,name,icon,color')->latest('date')->limit(5)->get()->map(function($item) {
-            $item->type = 'income';
-            return $item;
-        });
+        $recentExpenses = $user->expenses()
+            ->with('category:id,name,icon,color')
+            ->latest('date')
+            ->limit(5)
+            ->get()
+            ->map(fn($item) => $formatTransaction($item, 'expense'));
+
+        $recentIncomes = $user->incomes()
+            ->with('category:id,name,icon,color')
+            ->latest('date')
+            ->limit(5)
+            ->get()
+            ->map(fn($item) => $formatTransaction($item, 'income'));
         
         // Merge and sort
         $recentTransactions = $recentExpenses->merge($recentIncomes)
             ->sort(function ($a, $b) {
                 if ($a->date == $b->date) {
-                    return $b->created_at <=> $a->created_at; // Secondary sort: Created At Desc
+                    return $b->created_at <=> $a->created_at; 
                 }
-                return $b->date <=> $a->date; // Primary sort: Date Desc
+                return $b->date <=> $a->date; 
             })
             ->take(5)
             ->values();
@@ -62,16 +95,16 @@ class DashboardController extends Controller
         // 6-Month Trend Data
         $trends = collect(range(0, 5))->map(function ($i) use ($user) {
             $date = now()->subMonths($i);
-            $month = $date->format('M'); // Jan, Feb
+            $month = $date->format('M'); 
             $monthNum = $date->month;
             $year = $date->year;
 
-            $income = $user->incomes()
+            $income = (float) $user->incomes()
                 ->whereYear('date', $year)
                 ->whereMonth('date', $monthNum)
                 ->sum('amount');
 
-            $expense = $user->expenses()
+            $expense = (float) $user->expenses()
                 ->whereYear('date', $year)
                 ->whereMonth('date', $monthNum)
                 ->sum('amount');
@@ -81,7 +114,7 @@ class DashboardController extends Controller
                 'income' => $income,
                 'expense' => $expense
             ];
-        })->reverse()->values(); // Reverse to show Oldest -> Newest
+        })->reverse()->values(); 
 
         return response()->json([
             'summary' => [
