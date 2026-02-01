@@ -6,8 +6,46 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Expense;
+use App\Models\Income;
+use App\Models\Loan;
+
 class TransactionController extends Controller
 {
+    // ... index method ...
+
+    public function destroy(Request $request, $id)
+    {
+        $type = $request->input('type'); // 'expense', 'income', 'loan', 'loan_given', 'loan_taken'
+        
+        if (!$type) {
+            return response()->json(['message' => 'Type is required'], 400);
+        }
+
+        $user = $request->user();
+        
+        switch ($type) {
+            case 'expense':
+                $record = Expense::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+                break;
+            case 'income':
+                $record = Income::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+                break;
+            case 'loan':
+            case 'loan_given':
+            case 'loan_taken':
+                $record = Loan::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+                break;
+            default:
+                return response()->json(['message' => 'Invalid type'], 400);
+        }
+
+        $record->delete();
+
+        return response()->noContent();
+    }
+
+
     public function index(Request $request)
     {
         $user = $request->user();

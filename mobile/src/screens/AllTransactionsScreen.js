@@ -11,6 +11,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  Alert,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -122,6 +123,38 @@ export default function AllTransactionsScreen({ navigation }) {
         loadTransactions(1, text, filters);
       }, 500),
     );
+  };
+
+  const confirmDelete = (item) => {
+    Alert.alert(
+      "Delete Transaction",
+      "Are you sure you want to delete this transaction? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDelete(item),
+        },
+      ],
+    );
+  };
+
+  const handleDelete = async (item) => {
+    try {
+      setLoading(true);
+      await TransactionService.delete(item.id, item.type);
+      // Remove from local state immediately for better UX
+      setTransactions((prev) =>
+        prev.filter((t) => t.id !== item.id || t.type !== item.type),
+      );
+      // Reload in background to ensure sync
+      loadTransactions(1, searchText, filters);
+    } catch (error) {
+      console.log("Delete failed", error);
+      Alert.alert("Error", "Failed to delete transaction");
+      setLoading(false);
+    }
   };
 
   const openFilterModal = () => {
@@ -384,40 +417,49 @@ export default function AllTransactionsScreen({ navigation }) {
       <FlatList
         data={transactions}
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            <View
-              style={[
-                styles.iconBox,
-                { backgroundColor: getColor(item) + "20" },
-              ]}
-            >
-              <Ionicons name={getIcon(item)} size={20} color={getColor(item)} />
-            </View>
-            <View style={styles.info}>
-              <Text style={styles.title}>
-                {item.category?.name || item.title || "Transaction"}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onLongPress={() => confirmDelete(item)}
+          >
+            <View style={styles.item}>
+              <View
+                style={[
+                  styles.iconBox,
+                  { backgroundColor: getColor(item) + "20" },
+                ]}
+              >
+                <Ionicons
+                  name={getIcon(item)}
+                  size={20}
+                  color={getColor(item)}
+                />
+              </View>
+              <View style={styles.info}>
+                <Text style={styles.title}>
+                  {item.category?.name || item.title || "Transaction"}
+                </Text>
+                <Text style={styles.date}>
+                  {new Date(item.date).toLocaleDateString()}
+                </Text>
+              </View>
+              <Text
+                style={[
+                  styles.amount,
+                  {
+                    color:
+                      item.type === "expense" || item.type === "loan_given"
+                        ? colors.danger
+                        : colors.success,
+                  },
+                ]}
+              >
+                {item.type === "expense" || item.type === "loan_given"
+                  ? "-"
+                  : "+"}
+                Rs {item.amount}
               </Text>
-              <Text style={styles.date}>
-                {new Date(item.date).toLocaleDateString()}
-              </Text>
             </View>
-            <Text
-              style={[
-                styles.amount,
-                {
-                  color:
-                    item.type === "expense" || item.type === "loan_given"
-                      ? colors.danger
-                      : colors.success,
-                },
-              ]}
-            >
-              {item.type === "expense" || item.type === "loan_given"
-                ? "-"
-                : "+"}
-              Rs {item.amount}
-            </Text>
-          </View>
+          </TouchableOpacity>
         )}
         keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
         contentContainerStyle={styles.listContent}

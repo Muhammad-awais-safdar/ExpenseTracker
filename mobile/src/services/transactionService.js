@@ -9,6 +9,12 @@ const TransactionService = {
     });
     return response.data;
   },
+
+  delete: async (id, type) => {
+    await api.delete(`/api/transactions/${id}`, {
+      params: { type },
+    });
+  },
 };
 
 export default TransactionService;
