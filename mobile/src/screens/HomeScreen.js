@@ -22,8 +22,10 @@ import MemoryCache from "../utils/memoryCache";
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { colors, isDarkMode } = useTheme();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(
+    MemoryCache.getStale("dashboard") || null,
+  );
+  const [loading, setLoading] = useState(!dashboardData);
   const [refreshing, setRefreshing] = useState(false);
 
   // Animation values
@@ -33,22 +35,18 @@ export default function HomeScreen({ navigation }) {
 
   const loadDashboard = async () => {
     console.log("[HomeScreen] loadDashboard started");
+    // 1. Instant Cache Load (Stale-While-Revalidate)
+    const cached = MemoryCache.getStale("dashboard");
+    if (cached) {
+      setDashboardData(cached);
+      setLoading(false);
+    }
+
     try {
-      console.log("[HomeScreen] Checking cache...");
-      const cached = MemoryCache.get("dashboard");
-      console.log("[HomeScreen] Cache result:", cached ? "Found" : "Miss");
-
-      if (cached) {
-        setDashboardData(cached);
-        setLoading(false);
-      }
-
-      console.log("[HomeScreen] Fetching from API...");
       const data = await DashboardService.getSummary();
-      console.log("[HomeScreen] API Fetch Success");
 
       setDashboardData(data);
-      MemoryCache.set("dashboard", data);
+      await MemoryCache.set("dashboard", data);
     } catch (error) {
       console.error("[HomeScreen] Dashboard fetch error:", error);
       if (error.response?.status === 401) {
@@ -56,7 +54,6 @@ export default function HomeScreen({ navigation }) {
         logout(); // Force logout on 401
       }
     } finally {
-      console.log("[HomeScreen] Finally block reached");
       if (mounted.current) {
         setLoading(false);
         setRefreshing(false);

@@ -96,7 +96,7 @@ export default function AddIncomeScreen({ navigation }) {
           date,
           category_id: selectedCategory,
         });
-        MemoryCache.clear();
+        // MemoryCache.clear();
         setAlertConfig({
           visible: true,
           title: "Success",

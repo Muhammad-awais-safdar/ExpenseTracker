@@ -2,7 +2,6 @@ import axios from "axios";
 import { Alert } from "react-native";
 
 const API_URL = process.env.API_URL;
-console.log("Configured API_URL:", API_URL); // Debug Log
 
 const api = axios.create({
   baseURL: API_URL,
@@ -16,14 +15,9 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
-    config.metadata = { startTime: new Date() };
-    console.log(
-      `[API REQUEST] ${config.method.toUpperCase()} ${config.url} at ${config.metadata.startTime.toISOString()}`,
-    );
     return config;
   },
   (error) => {
-    console.error("[API REQUEST ERROR]", error);
     return Promise.reject(error);
   },
 );
@@ -38,20 +32,9 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
-    const duration = new Date() - response.config.metadata.startTime;
-    console.log(
-      `[API RESPONSE] ${response.status} ${response.config.url} - ${duration}ms`,
-    );
     return response;
   },
   (error) => {
-    const duration = error.config?.metadata
-      ? new Date() - error.config.metadata.startTime
-      : "N/A";
-    console.log(
-      `[API ERROR] ${error.response?.status || "Network Error"} ${error.config?.url || "Unknown"} - ${duration}ms`,
-    );
-
     if (!error.response) {
       // Network Error or Server Down
       Alert.alert(
@@ -73,7 +56,7 @@ api.interceptors.response.use(
         }
       }
     }
-    // Always reject so the caller logic (LoginScreen) handles the error state (stops loading)
+    // Always reject
     return Promise.reject(error);
   },
 );

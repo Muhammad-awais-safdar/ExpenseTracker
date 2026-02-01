@@ -99,7 +99,7 @@ export default function AddExpenseScreen({ navigation }) {
           date,
           category_id: selectedCategory,
         });
-        MemoryCache.clear(); // Clear cache to force refresh
+        // MemoryCache.clear(); // Don't clear everything, let staleness handle it or specific invalidation
         setAlertConfig({
           visible: true,
           title: "Success",
