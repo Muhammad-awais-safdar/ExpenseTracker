@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Alert } from "react-native";
 
 const API_URL = process.env.API_URL;
 console.log("Configured API_URL:", API_URL); // Debug Log
@@ -50,6 +51,14 @@ api.interceptors.response.use(
     console.log(
       `[API ERROR] ${error.response?.status || "Network Error"} ${error.config?.url || "Unknown"} - ${duration}ms`,
     );
+
+    if (!error.response) {
+      // Network Error or Server Down
+      Alert.alert(
+        "Connection Error",
+        "Could not connect to the server. Please check your internet connection.",
+      );
+    }
 
     if (error.response) {
       // Handle 401 Unauthorized globally

@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import ExpenseService from "../services/expenseService";
 import CategoryService from "../services/categoryService";
@@ -164,76 +166,86 @@ export default function AddExpenseScreen({ navigation }) {
   });
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Amount (PKR)</Text>
-        <TextInput
-          style={styles.input}
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
-          placeholder="0.00"
-          placeholderTextColor={colors.placeholder}
-          autoFocus
-        />
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <ScrollView style={styles.container}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Amount (PKR)</Text>
+          <TextInput
+            style={styles.input}
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            placeholder="0.00"
+            placeholderTextColor={colors.placeholder}
+            autoFocus
+          />
+        </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={styles.input}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="What did you buy?"
-          placeholderTextColor={colors.placeholder}
-        />
-      </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={styles.input}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="What did you buy?"
+            placeholderTextColor={colors.placeholder}
+          />
+        </View>
 
-      <CustomDatePicker label="Date" value={date} onChange={setDate} />
+        <CustomDatePicker label="Date" value={date} onChange={setDate} />
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Category</Text>
-        {loadingCats ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryContainer}
-          >
-            {categories.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === cat.id && styles.selectedChip,
-                ]}
-                onPress={() => setSelectedCategory(cat.id)}
-              >
-                <Text
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Category</Text>
+          {loadingCats ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoryContainer}
+            >
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
                   style={[
-                    styles.chipText,
-                    selectedCategory === cat.id && styles.selectedChipText,
+                    styles.categoryChip,
+                    selectedCategory === cat.id && styles.selectedChip,
                   ]}
+                  onPress={() => setSelectedCategory(cat.id)}
                 >
-                  {cat.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selectedCategory === cat.id && styles.selectedChipText,
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
-      <ModernButton
-        title="Save Expense"
-        onPress={handleSubmit}
-        loading={loading}
-        icon={(props) => (
-          <Ionicons name="checkmark-circle" size={20} color="#fff" {...props} />
-        )}
-      />
+        <ModernButton
+          title="Save Expense"
+          onPress={handleSubmit}
+          loading={loading}
+          icon={(props) => (
+            <Ionicons
+              name="checkmark-circle"
+              size={20}
+              color="#fff"
+              {...props}
+            />
+          )}
+        />
 
-      <CustomAlert {...alertConfig} />
-    </ScrollView>
+        <CustomAlert {...alertConfig} />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

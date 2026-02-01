@@ -84,15 +84,24 @@ export const SyncProvider = ({ children }) => {
         await processAction(action);
       } catch (error) {
         console.error("Sync failed for item", action, error);
-        // If it's a server error (500), maybe keep it? For now, we keep it to retry later?
-        // Or if it's a validation error (422), discard it?
-        // Implementing simple retry logic: keep it in queue if network error or 500
+
+        // Error Handling Policy:
+        // 5xx (Server Error) -> Keep in queue (Retry later)
+        // Network Error -> Keep in queue (Retry later)
+        // 404 (Not Found) -> Discard (Item already deleted on server)
+        // 422 (Validation Error) -> Discard (Bad data, cannot be fixed by retrying)
+
         if (!error.response || error.response.status >= 500) {
           failedItems.push(action);
+        } else if (
+          error.response.status === 404 ||
+          error.response.status === 422
+        ) {
+          console.warn("Discarding invalid/stale action:", action);
+          // Do not push to failedItems, effectively deleting it from queue
         } else {
-          // 4xx error means our data was bad, discard it to unblock queue?
-          // Ideally notify user.
-          // For simplicity in v1, we discard 4xx to prevent permanent jams.
+          // For other 4xx errors, we also likely want to discard to avoid jams
+          console.warn("Discarding unprocessable action:", action);
         }
       }
     }

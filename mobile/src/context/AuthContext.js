@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleSessionExpiry = async () => {
-    await AsyncStorage.removeItem("token");
+    await SecureStore.deleteItemAsync("token");
     await AsyncStorage.removeItem("user");
     setToken(null);
     setUser(null);
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Parallel execution for faster startup
       const [storedToken, storedUser, bioEnabled] = await Promise.all([
-        AsyncStorage.getItem("token"),
+        SecureStore.getItemAsync("token"),
         AsyncStorage.getItem("user"),
         AsyncStorage.getItem("biometric_enabled"),
       ]);
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user, token } = await AuthService.login(email, password);
 
-      await AsyncStorage.setItem("token", token);
+      await SecureStore.setItemAsync("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setToken(token);
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
         password_confirmation,
       );
 
-      await AsyncStorage.setItem("token", token);
+      await SecureStore.setItemAsync("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setToken(token);
@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }) => {
       console.log("Logout error", e);
     }
 
-    await AsyncStorage.removeItem("token");
+    await SecureStore.deleteItemAsync("token");
     await AsyncStorage.removeItem("user");
     setToken(null);
     setUser(null);
