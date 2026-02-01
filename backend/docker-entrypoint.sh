@@ -15,5 +15,5 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-echo "✨ Starting server on port $PORT..."
-php -S 0.0.0.0:10000 -t public
+echo "✨ Starting Apache..."
+apache2-foreground
