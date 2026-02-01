@@ -407,9 +407,13 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.transactionInfo}>
                   <Text style={[styles.tTitle, { color: colors.text }]}>
                     {item.category?.name ||
-                      (item.type === "income" ? item.source : item.description)}
+                      (item.type === "income" ? "Income" : "Expense")}
                   </Text>
                   <Text style={[styles.tDate, { color: colors.textSecondary }]}>
+                    {item.type === "income"
+                      ? item.source || ""
+                      : item.description || ""}
+                    {item.source || item.description ? " • " : ""}
                     {new Date(item.date).toLocaleDateString()}
                   </Text>
                 </View>
