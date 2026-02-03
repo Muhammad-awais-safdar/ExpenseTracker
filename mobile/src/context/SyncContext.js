@@ -1,8 +1,9 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/axios"; // Corrected import path
+import api from "../api/axios";
 import { Alert } from "react-native";
+import MemoryCache from "../utils/memoryCache";
 
 const SyncContext = createContext();
 
@@ -110,24 +111,39 @@ export const SyncProvider = ({ children }) => {
     setIsSyncing(false);
 
     if (failedItems.length === 0 && queue.length > 0) {
+      MemoryCache.clear(); // Clear cache so UI fetches fresh data
       Alert.alert("Sync Complete", "All offline actions have been synced.");
     }
   };
 
   const processAction = async (action) => {
     switch (action.type) {
-      case "ADD_TRANSACTION":
-        await api.post("/transactions", action.payload);
+      case "ADD_EXPENSE":
+        await api.post("/expenses", action.payload);
+        break;
+      case "ADD_INCOME":
+        await api.post("/incomes", action.payload);
+        break;
+      case "ADD_TRANSACTION": // Legacy fallback
+        console.warn("Legacy ADD_TRANSACTION encountered", action);
         break;
       case "UPDATE_TRANSACTION":
-        await api.put(`/transactions/${action.payload.id}`, action.payload);
+        if (action.payload.type === "expense") {
+          await api.put(`/expenses/${action.payload.id}`, action.payload);
+        } else {
+          await api.put(`/incomes/${action.payload.id}`, action.payload);
+        }
         break;
       case "DELETE_TRANSACTION":
-        await api.delete(`/transactions/${action.payload.id}`);
+        if (action.payload.type === "expense") {
+          await api.delete(`/expenses/${action.payload.id}`);
+        } else {
+          await api.delete(`/incomes/${action.payload.id}`);
+        }
         break;
-      // Add other cases like categories, budgets, etc.
       default:
         console.warn("Unknown offline action type:", action.type);
+        throw new Error(`Unknown action type: ${action.type}`); // Throw so it counts as failu
     }
   };
 

@@ -56,27 +56,7 @@ class TransactionController extends Controller
         $startDate = $request->input('start_date'); // YYYY-MM-DD
         $endDate = $request->input('end_date');     // YYYY-MM-DD
 
-        // Base Filter Closure
-        $applyFilters = function($q) use ($search, $categoryId, $startDate, $endDate, $user) {
-            $q->where('user_id', $user->id);
-            if ($startDate) $q->where('date', '>=', $startDate);
-            if ($endDate) $q->where('date', '<=', $endDate);
-            if ($categoryId) {
-                 // Note: Loans don't have categories in this simple model, so strict category filter excludes loans
-                 // unless we decide loans have a 'category_id' which is currently null
-                 if(method_exists($q->getModel(), 'getTable') && $q->getModel()->getTable() === 'loans') {
-                    // loans table
-                    $q->whereRaw('1 = 0'); // Exclude loans if category filter is active
-                 } else {
-                     $q->where('category_id', $categoryId);
-                 }
-            }
-            if ($search) {
-                 // check table to determine column names
-                 // This closure is applied to query builder instance
-                 // Actually DB::table returns builder.
-            }
-        };
+
         
         // Re-writing queries to apply filters cleanly
         

@@ -23,6 +23,8 @@ import ProfileScreen from "../screens/ProfileScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import RecurringTransactionsScreen from "../screens/RecurringTransactionsScreen";
 import AddRecurringScreen from "../screens/AddRecurringScreen";
+import SavingGoalDetailScreen from "../screens/SavingGoalDetailScreen";
+import TransactionDetailScreen from "../screens/TransactionDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -107,6 +109,26 @@ function AppContent() {
               name="AllTransactions"
               component={AllTransactionsScreen}
               options={{ title: "All Transactions" }}
+            />
+            <Stack.Screen
+              name="SavingGoalDetail"
+              component={SavingGoalDetailScreen}
+              options={{
+                title: "Goal Details",
+                headerTintColor: "#fff",
+                headerTransparent: true,
+                headerTitle: "",
+              }}
+            />
+            <Stack.Screen
+              name="TransactionDetail"
+              component={TransactionDetailScreen}
+              options={{
+                title: "Details",
+                headerTintColor: "#fff",
+                headerTransparent: true,
+                headerTitle: "",
+              }}
             />
             <Stack.Screen
               name="Analytics"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import TransactionService from "../services/transactionService";
 import CategoryService from "../services/categoryService";
 import { useTheme } from "../context/ThemeContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function AllTransactionsScreen({ navigation }) {
   const { colors, isDarkMode } = useTheme();
@@ -47,10 +48,14 @@ export default function AllTransactionsScreen({ navigation }) {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-  useEffect(() => {
-    loadTransactions(1);
-    loadCategories();
-  }, []);
+  // Initial Load & Focus Refresh
+  useFocusEffect(
+    useCallback(() => {
+      // If we want to auto-refresh when returning from details (e.g. after delete)
+      loadTransactions(1, searchText, filters);
+      loadCategories();
+    }, []),
+  );
 
   const loadCategories = async () => {
     try {
@@ -66,7 +71,7 @@ export default function AllTransactionsScreen({ navigation }) {
     search = searchText,
     currentFilters = filters,
   ) => {
-    if (loading && pageNum > 1) return; // Allow reload if page 1
+    if (loading && pageNum > 1) return;
     if (pageNum === 1) setLoading(true);
 
     try {
@@ -125,38 +130,6 @@ export default function AllTransactionsScreen({ navigation }) {
     );
   };
 
-  const confirmDelete = (item) => {
-    Alert.alert(
-      "Delete Transaction",
-      "Are you sure you want to delete this transaction? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => handleDelete(item),
-        },
-      ],
-    );
-  };
-
-  const handleDelete = async (item) => {
-    try {
-      setLoading(true);
-      await TransactionService.delete(item.id, item.type);
-      // Remove from local state immediately for better UX
-      setTransactions((prev) =>
-        prev.filter((t) => t.id !== item.id || t.type !== item.type),
-      );
-      // Reload in background to ensure sync
-      loadTransactions(1, searchText, filters);
-    } catch (error) {
-      console.log("Delete failed", error);
-      Alert.alert("Error", "Failed to delete transaction");
-      setLoading(false);
-    }
-  };
-
   const openFilterModal = () => {
     setTempFilters(filters);
     setShowFilterModal(true);
@@ -189,6 +162,7 @@ export default function AllTransactionsScreen({ navigation }) {
   };
 
   const getIcon = (item) => {
+    if (item.category?.icon) return item.category.icon;
     if (item.type === "expense") return "cart-outline";
     if (item.type === "income") return "wallet-outline";
     if (item.type.includes("loan")) return "swap-horizontal";
@@ -196,6 +170,7 @@ export default function AllTransactionsScreen({ navigation }) {
   };
 
   const getColor = (item) => {
+    if (item.category?.color) return item.category.color;
     if (item.type === "expense") return colors.danger;
     if (item.type === "income") return colors.success;
     if (item.type.includes("loan")) return colors.warning;
@@ -208,28 +183,29 @@ export default function AllTransactionsScreen({ navigation }) {
       backgroundColor: colors.background,
     },
     listContent: {
-      padding: 20,
+      paddingBottom: 20,
     },
     item: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.card,
-      padding: 15,
-      borderRadius: 12,
-      marginBottom: 10,
+      padding: 16,
+      marginHorizontal: 20,
+      marginTop: 12,
+      borderRadius: 16,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
-      shadowRadius: 2,
+      shadowRadius: 5,
       elevation: 2,
     },
     iconBox: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 48,
+      height: 48,
+      borderRadius: 14,
       justifyContent: "center",
       alignItems: "center",
-      marginRight: 15,
+      marginRight: 16,
     },
     info: {
       flex: 1,
@@ -238,6 +214,11 @@ export default function AllTransactionsScreen({ navigation }) {
       fontWeight: "bold",
       fontSize: 16,
       color: colors.text,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: 13,
+      color: colors.textSecondary,
     },
     date: {
       color: colors.textSecondary,
@@ -253,26 +234,19 @@ export default function AllTransactionsScreen({ navigation }) {
       color: colors.textSecondary,
       marginTop: 50,
     },
-    loadingOverlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: isDarkMode ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.8)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
     searchContainer: {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.card,
       margin: 20,
-      marginBottom: 0,
       paddingHorizontal: 15,
       height: 50,
-      borderRadius: 12,
+      borderRadius: 14,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 1 },
+      shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 2,
+      shadowRadius: 4,
+      elevation: 3,
     },
     searchIcon: {
       marginRight: 10,
@@ -290,10 +264,10 @@ export default function AllTransactionsScreen({ navigation }) {
     },
     modalContent: {
       backgroundColor: colors.card,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      padding: 20,
-      maxHeight: "80%",
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      padding: 24,
+      maxHeight: "85%",
     },
     modalHeader: {
       flexDirection: "row",
@@ -302,15 +276,15 @@ export default function AllTransactionsScreen({ navigation }) {
       marginBottom: 20,
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: "bold",
       color: colors.text,
     },
-    filterLabel: {
+    filterSectionTitle: {
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "bold",
+      marginTop: 15,
       marginBottom: 10,
-      marginTop: 10,
       color: colors.text,
     },
     dateRow: {
@@ -319,61 +293,56 @@ export default function AllTransactionsScreen({ navigation }) {
       alignItems: "center",
     },
     dateButton: {
-      padding: 10,
+      padding: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: 8,
-      width: "45%",
+      borderRadius: 12,
+      width: "47%",
       alignItems: "center",
     },
     categoryList: {
       flexDirection: "row",
-      marginBottom: 20,
+      flexWrap: "wrap",
     },
     categoryChip: {
-      paddingHorizontal: 15,
-      paddingVertical: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
       borderRadius: 20,
       backgroundColor: colors.inputBackground,
-      marginRight: 10,
+      marginRight: 8,
+      marginBottom: 8,
     },
     activeChip: {
       backgroundColor: colors.primary,
     },
     chipText: {
       color: colors.text,
+      fontWeight: "500",
     },
     activeChipText: {
       color: "#fff",
+      fontWeight: "bold",
     },
     modalFooter: {
       flexDirection: "row",
       justifyContent: "space-between",
-      marginTop: 20,
+      marginTop: 30,
     },
     resetButton: {
-      padding: 15,
-      borderRadius: 10,
+      padding: 16,
+      borderRadius: 14,
       backgroundColor: colors.inputBackground,
       flex: 1,
       marginRight: 10,
       alignItems: "center",
     },
-    resetButtonText: {
-      color: colors.text,
-      fontWeight: "bold",
-    },
     applyButton: {
-      padding: 15,
-      borderRadius: 10,
+      padding: 16,
+      borderRadius: 14,
       backgroundColor: colors.primary,
       flex: 1,
       marginLeft: 10,
       alignItems: "center",
-    },
-    applyButtonText: {
-      color: "#fff",
-      fontWeight: "bold",
     },
   });
 
@@ -388,7 +357,7 @@ export default function AllTransactionsScreen({ navigation }) {
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search transactions..."
+          placeholder="Search..."
           placeholderTextColor={colors.placeholder}
           value={searchText}
           onChangeText={handleSearch}
@@ -402,24 +371,44 @@ export default function AllTransactionsScreen({ navigation }) {
             />
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={openFilterModal} style={{ marginLeft: 10 }}>
-          <Ionicons
-            name="filter"
-            size={24}
-            color={
-              filters.categoryId || filters.startDate
-                ? colors.primary
-                : colors.textSecondary
-            }
-          />
+        <TouchableOpacity onPress={openFilterModal} style={{ marginLeft: 15 }}>
+          <View style={{ position: "relative" }}>
+            <Ionicons
+              name="options-outline" // More modern filter icon
+              size={24}
+              color={
+                filters.categoryId || filters.startDate
+                  ? colors.primary
+                  : colors.textSecondary
+              }
+            />
+            {(filters.categoryId || filters.startDate) && (
+              <View
+                style={{
+                  position: "absolute",
+                  top: -2,
+                  right: -2,
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: colors.danger,
+                  borderWidth: 1,
+                  borderColor: colors.card,
+                }}
+              />
+            )}
+          </View>
         </TouchableOpacity>
       </View>
+
       <FlatList
         data={transactions}
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.7}
-            onLongPress={() => confirmDelete(item)}
+            onPress={() =>
+              navigation.navigate("TransactionDetail", { transaction: item })
+            }
           >
             <View style={styles.item}>
               <View
@@ -430,15 +419,21 @@ export default function AllTransactionsScreen({ navigation }) {
               >
                 <Ionicons
                   name={getIcon(item)}
-                  size={20}
+                  size={24}
                   color={getColor(item)}
                 />
               </View>
               <View style={styles.info}>
-                <Text style={styles.title}>
-                  {item.category?.name || item.title || "Transaction"}
+                <Text style={styles.title} numberOfLines={1}>
+                  {item.category?.name ||
+                    (item.type.includes("loan")
+                      ? item.title
+                      : item.type === "expense"
+                        ? "Expense"
+                        : "Income")}
                 </Text>
-                <Text style={styles.date}>
+                <Text style={styles.subtitle} numberOfLines={1}>
+                  {item.title || item.description || item.source} •{" "}
                   {new Date(item.date).toLocaleDateString()}
                 </Text>
               </View>
@@ -456,12 +451,12 @@ export default function AllTransactionsScreen({ navigation }) {
                 {item.type === "expense" || item.type === "loan_given"
                   ? "-"
                   : "+"}
-                Rs {item.amount}
+                {item.amount}
               </Text>
             </View>
           </TouchableOpacity>
         )}
-        keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
+        keyExtractor={(item) => `${item.type}-${item.id}`} // Simpler key
         contentContainerStyle={styles.listContent}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
@@ -479,13 +474,35 @@ export default function AllTransactionsScreen({ navigation }) {
         }
         ListEmptyComponent={
           !loading && (
-            <Text style={styles.emptyText}>No transactions found</Text>
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 50,
+              }}
+            >
+              <Ionicons
+                name="documents-outline"
+                size={64}
+                color={colors.border}
+              />
+              <Text style={styles.emptyText}>No transactions found</Text>
+            </View>
           )
         }
       />
       {loading && page === 1 && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View style={StyleSheet.absoluteFillObject}>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: colors.background,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
         </View>
       )}
 
@@ -501,33 +518,59 @@ export default function AllTransactionsScreen({ navigation }) {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filter Transactions</Text>
               <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
-              <Text style={styles.filterLabel}>Date Range</Text>
+            <ScrollView style={{ maxHeight: 400 }}>
+              <Text style={styles.filterSectionTitle}>Date Range</Text>
               <View style={styles.dateRow}>
                 <TouchableOpacity
                   style={styles.dateButton}
                   onPress={() => setShowStartDatePicker(true)}
                 >
-                  <Text style={{ color: colors.text }}>
+                  <Text
+                    style={{
+                      color: tempFilters.startDate
+                        ? colors.text
+                        : colors.textSecondary,
+                      fontWeight: tempFilters.startDate ? "600" : "normal",
+                    }}
+                  >
                     {tempFilters.startDate
                       ? tempFilters.startDate.toLocaleDateString()
                       : "Start Date"}
                   </Text>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={colors.textSecondary}
+                    style={{ position: "absolute", right: 10 }}
+                  />
                 </TouchableOpacity>
-                <Text style={{ color: colors.text }}>-</Text>
+                <Text style={{ color: colors.textSecondary }}>—</Text>
                 <TouchableOpacity
                   style={styles.dateButton}
                   onPress={() => setShowEndDatePicker(true)}
                 >
-                  <Text style={{ color: colors.text }}>
+                  <Text
+                    style={{
+                      color: tempFilters.endDate
+                        ? colors.text
+                        : colors.textSecondary,
+                      fontWeight: tempFilters.endDate ? "600" : "normal",
+                    }}
+                  >
                     {tempFilters.endDate
                       ? tempFilters.endDate.toLocaleDateString()
                       : "End Date"}
                   </Text>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={colors.textSecondary}
+                    style={{ position: "absolute", right: 10 }}
+                  />
                 </TouchableOpacity>
               </View>
               {showStartDatePicker && (
@@ -549,12 +592,8 @@ export default function AllTransactionsScreen({ navigation }) {
                 />
               )}
 
-              <Text style={styles.filterLabel}>Category</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.categoryList}
-              >
+              <Text style={styles.filterSectionTitle}>Category</Text>
+              <View style={styles.categoryList}>
                 <TouchableOpacity
                   style={[
                     styles.categoryChip,
@@ -568,7 +607,6 @@ export default function AllTransactionsScreen({ navigation }) {
                     style={[
                       styles.chipText,
                       !tempFilters.categoryId && styles.activeChipText,
-                      { color: !tempFilters.categoryId ? "#fff" : colors.text },
                     ]}
                   >
                     All
@@ -593,19 +631,13 @@ export default function AllTransactionsScreen({ navigation }) {
                         styles.chipText,
                         tempFilters.categoryId === cat.id &&
                           styles.activeChipText,
-                        {
-                          color:
-                            tempFilters.categoryId === cat.id
-                              ? "#fff"
-                              : colors.text,
-                        },
                       ]}
                     >
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -613,13 +645,17 @@ export default function AllTransactionsScreen({ navigation }) {
                 style={styles.resetButton}
                 onPress={resetFilters}
               >
-                <Text style={styles.resetButtonText}>Reset</Text>
+                <Text style={{ color: colors.text, fontWeight: "bold" }}>
+                  Reset
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.applyButton}
                 onPress={applyFilters}
               >
-                <Text style={styles.applyButtonText}>Apply Filters</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Apply Filters
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
