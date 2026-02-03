@@ -15,6 +15,8 @@ import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import LottieView from "lottie-react-native";
+import { getValidIconName } from "../utils/iconMap";
 import { LinearGradient } from "expo-linear-gradient";
 import DashboardService from "../services/dashboardService";
 import MemoryCache from "../utils/memoryCache";
@@ -115,11 +117,19 @@ export default function HomeScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={{ marginTop: 10, color: "#6B7280" }}>
+        {/* Lottie Animation for Premium Feel */}
+        <LottieView
+          source={{
+            uri: "https://assets5.lottiefiles.com/packages/lf20_tijmpkyq.json", // Premium Wallet/Card Animation
+          }}
+          autoPlay
+          loop
+          style={{ width: 200, height: 200 }}
+        />
+        <Text style={{ marginTop: -40, color: "#6B7280", fontWeight: "600" }}>
           {showLongWaitMessage
-            ? "Server is waking up (can take 1 min)..."
-            : "Connecting to server..."}
+            ? "Server is waking up..."
+            : "Syncing your finances..."}
         </Text>
         {showLongWaitMessage && (
           <TouchableOpacity
@@ -153,7 +163,7 @@ export default function HomeScreen({ navigation }) {
         onPress={() => navigation.navigate(route)}
       >
         <View style={[styles.actionIcon, { backgroundColor: color + "20" }]}>
-          <Ionicons name={icon} size={24} color={color} />
+          <Ionicons name={getValidIconName(icon)} size={24} color={color} />
         </View>
         <Text style={[styles.actionBtnText, { color: colors.text }]}>
           {title}
@@ -318,31 +328,31 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.actionsGrid}>
             <QuickAction
               title="Add Expense"
-              icon="remove-circle"
+              icon={getValidIconName("remove-circle-outline")}
               color={colors.danger}
               route="AddExpense"
             />
             <QuickAction
               title="Add Income"
-              icon="add-circle"
+              icon={getValidIconName("add-circle-outline")}
               color={colors.success}
               route="AddIncome"
             />
             <QuickAction
               title="Loans"
-              icon="swap-horizontal"
+              icon={getValidIconName("swap-horizontal-outline")}
               color={colors.warning}
               route="Loans"
             />
             <QuickAction
               title="Budgets"
-              icon="pie-chart"
+              icon={getValidIconName("pie-chart-outline")}
               color={colors.info}
               route="Budgets"
             />
             <QuickAction
               title="Trends"
-              icon="bar-chart"
+              icon={getValidIconName("bar-chart-outline")}
               color={colors.primary}
               route="Analytics"
             />
@@ -391,9 +401,11 @@ export default function HomeScreen({ navigation }) {
                 >
                   <Ionicons
                     name={
-                      item.type === "expense"
-                        ? "cart-outline"
-                        : "wallet-outline"
+                      item.category?.icon
+                        ? getValidIconName(item.category.icon)
+                        : item.type === "expense"
+                          ? getValidIconName("expense")
+                          : getValidIconName("income")
                     }
                     size={20}
                     color={

@@ -9,6 +9,7 @@ import {
   Alert,
   SafeAreaView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import AuthService from "../services/authService";
 import { useTheme } from "../context/ThemeContext";
 
@@ -18,6 +19,11 @@ export default function ChangePasswordScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Visibility toggle states
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleUpdate = async () => {
     if (!currentPassword || !password || !passwordConfirmation) {
@@ -65,15 +71,22 @@ export default function ChangePasswordScreen({ navigation }) {
       color: colors.text,
       marginBottom: 5,
     },
-    input: {
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: colors.inputBackground,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: 8,
-      padding: 12,
-      fontSize: 16,
+      paddingHorizontal: 12,
       marginBottom: 20,
+      height: 50,
+    },
+    input: {
+      flex: 1,
+      fontSize: 16,
       color: colors.text,
+      height: "100%",
     },
     button: {
       backgroundColor: colors.primary,
@@ -93,34 +106,61 @@ export default function ChangePasswordScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.form}>
         <Text style={styles.label}>Current Password</Text>
-        <TextInput
-          style={styles.input}
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-          placeholder="Enter current password"
-          placeholderTextColor={colors.placeholder}
-          secureTextEntry
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            placeholder="Enter current password"
+            placeholderTextColor={colors.placeholder}
+            secureTextEntry={!showCurrent}
+          />
+          <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)}>
+            <Ionicons
+              name={showCurrent ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>New Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter new password"
-          placeholderTextColor={colors.placeholder}
-          secureTextEntry
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter new password"
+            placeholderTextColor={colors.placeholder}
+            secureTextEntry={!showNew}
+          />
+          <TouchableOpacity onPress={() => setShowNew(!showNew)}>
+            <Ionicons
+              name={showNew ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Confirm New Password</Text>
-        <TextInput
-          style={styles.input}
-          value={passwordConfirmation}
-          onChangeText={setPasswordConfirmation}
-          placeholder="Confirm new password"
-          placeholderTextColor={colors.placeholder}
-          secureTextEntry
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={passwordConfirmation}
+            onChangeText={setPasswordConfirmation}
+            placeholder="Confirm new password"
+            placeholderTextColor={colors.placeholder}
+            secureTextEntry={!showConfirm}
+          />
+          <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+            <Ionicons
+              name={showConfirm ? "eye-off-outline" : "eye-outline"}
+              size={20}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.button}

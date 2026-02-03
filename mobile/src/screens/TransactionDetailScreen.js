@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { getValidIconName } from "../utils/iconMap";
 import { useTheme } from "../context/ThemeContext";
 import TransactionService from "../services/transactionService";
 
@@ -21,17 +22,19 @@ export default function TransactionDetailScreen({ route, navigation }) {
 
   // Determine color and icon
   let color = colors.text;
-  let icon = "help-circle";
+  let icon = getValidIconName("default");
 
-  if (isExpense) {
+  if (transaction.category?.icon) {
+    icon = getValidIconName(transaction.category.icon);
+  } else if (isExpense) {
     color = colors.danger;
-    icon = "cart";
+    icon = getValidIconName("expense");
   } else if (isIncome) {
     color = colors.success;
-    icon = "wallet";
+    icon = getValidIconName("income");
   } else if (isLoan) {
     color = colors.warning;
-    icon = "swap-horizontal";
+    icon = getValidIconName("loan");
   }
 
   // Handle Delete
@@ -66,7 +69,9 @@ export default function TransactionDetailScreen({ route, navigation }) {
     container: { flex: 1, backgroundColor: colors.background },
     header: {
       alignItems: "center",
-      paddingVertical: 40,
+      alignItems: "center",
+      paddingTop: 110, // Increased to clear status bar + transparent header
+      paddingBottom: 40,
       backgroundColor: isDarkMode ? colors.surfaceHighlight : color,
     },
     iconCircle: {

@@ -29,7 +29,7 @@ export default function AddExpenseScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
-  const { isOnline, addToQueue } = useSync();
+  const { isOnline, addToQueue, offlineQueue, syncNow, isSyncing } = useSync();
   const { colors, isDarkMode } = useTheme();
 
   useEffect(() => {
@@ -171,6 +171,42 @@ export default function AddExpenseScreen({ navigation }) {
       style={{ flex: 1 }}
     >
       <ScrollView style={styles.container}>
+        {/* Sync Status Banner */}
+        {offlineQueue.length > 0 && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.warning + "20",
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 20,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderWidth: 1,
+              borderColor: colors.warning,
+            }}
+            onPress={syncNow}
+            disabled={isSyncing}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons
+                name="cloud-upload-outline"
+                size={20}
+                color={colors.warning}
+                style={{ marginRight: 10 }}
+              />
+              <Text style={{ color: colors.text, fontWeight: "600" }}>
+                {isSyncing
+                  ? "Syncing..."
+                  : `${offlineQueue.length} pending items. Tap to retry.`}
+              </Text>
+            </View>
+            {isSyncing && (
+              <ActivityIndicator size="small" color={colors.warning} />
+            )}
+          </TouchableOpacity>
+        )}
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Amount (PKR)</Text>
           <TextInput

@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isBiometricEnabled, loginWithBiometrics } = useAuth();
   const { colors, isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
@@ -283,8 +284,15 @@ export default function LoginScreen({ navigation }) {
                 value={password}
                 onChangeText={setPassword}
                 autoCapitalize="none"
-                secureTextEntry
+                secureTextEntry={!showPassword}
               />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={colors.placeholder}
+                />
+              </TouchableOpacity>
             </View>
             {errors.password && (
               <Text style={styles.errorText}>{errors.password[0]}</Text>

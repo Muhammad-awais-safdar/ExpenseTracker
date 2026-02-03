@@ -19,6 +19,7 @@ import TransactionService from "../services/transactionService";
 import CategoryService from "../services/categoryService";
 import { useTheme } from "../context/ThemeContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { getValidIconName } from "../utils/iconMap";
 
 export default function AllTransactionsScreen({ navigation }) {
   const { colors, isDarkMode } = useTheme();
@@ -162,11 +163,11 @@ export default function AllTransactionsScreen({ navigation }) {
   };
 
   const getIcon = (item) => {
-    if (item.category?.icon) return item.category.icon;
-    if (item.type === "expense") return "cart-outline";
-    if (item.type === "income") return "wallet-outline";
-    if (item.type.includes("loan")) return "swap-horizontal";
-    return "help-circle-outline";
+    if (item.category?.icon) return getValidIconName(item.category.icon);
+    if (item.type === "expense") return getValidIconName("expense");
+    if (item.type === "income") return getValidIconName("income");
+    if (item.type.includes("loan")) return getValidIconName("loan");
+    return getValidIconName("default");
   };
 
   const getColor = (item) => {

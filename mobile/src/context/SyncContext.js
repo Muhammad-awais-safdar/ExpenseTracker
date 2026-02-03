@@ -86,23 +86,23 @@ export const SyncProvider = ({ children }) => {
       } catch (error) {
         console.error("Sync failed for item", action, error);
 
-        // Error Handling Policy:
-        // 5xx (Server Error) -> Keep in queue (Retry later)
-        // Network Error -> Keep in queue (Retry later)
-        // 404 (Not Found) -> Discard (Item already deleted on server)
-        // 422 (Validation Error) -> Discard (Bad data, cannot be fixed by retrying)
-
-        if (!error.response || error.response.status >= 500) {
+        if (error.response?.status === 404) {
+          // Only discard if we are SURE it's invalid. But for now, user wants to retry.
+          // Maybe the backend was down or route changed.
+          // We will keep it but log a warning.
+          console.warn(
+            "404 Error for action (Keeping in queue per user request):",
+            action,
+          );
           failedItems.push(action);
-        } else if (
-          error.response.status === 404 ||
-          error.response.status === 422
-        ) {
-          console.warn("Discarding invalid/stale action:", action);
-          // Do not push to failedItems, effectively deleting it from queue
+        } else if (error.response?.status === 422) {
+          // Validation error. Hard to retry without user edit.
+          // We'll keep it for now so user doesn't lose data, but it will likely fail again.
+          console.warn("Validation Error for action:", action);
+          failedItems.push(action);
         } else {
-          // For other 4xx errors, we also likely want to discard to avoid jams
-          console.warn("Discarding unprocessable action:", action);
+          // All other errors (500, Network, etc) -> Keep
+          failedItems.push(action);
         }
       }
     }
@@ -119,26 +119,26 @@ export const SyncProvider = ({ children }) => {
   const processAction = async (action) => {
     switch (action.type) {
       case "ADD_EXPENSE":
-        await api.post("/expenses", action.payload);
+        await api.post("/api/expenses", action.payload);
         break;
       case "ADD_INCOME":
-        await api.post("/incomes", action.payload);
+        await api.post("/api/incomes", action.payload);
         break;
       case "ADD_TRANSACTION": // Legacy fallback
         console.warn("Legacy ADD_TRANSACTION encountered", action);
         break;
       case "UPDATE_TRANSACTION":
         if (action.payload.type === "expense") {
-          await api.put(`/expenses/${action.payload.id}`, action.payload);
+          await api.put(`/api/expenses/${action.payload.id}`, action.payload);
         } else {
-          await api.put(`/incomes/${action.payload.id}`, action.payload);
+          await api.put(`/api/incomes/${action.payload.id}`, action.payload);
         }
         break;
       case "DELETE_TRANSACTION":
         if (action.payload.type === "expense") {
-          await api.delete(`/expenses/${action.payload.id}`);
+          await api.delete(`/api/expenses/${action.payload.id}`);
         } else {
-          await api.delete(`/incomes/${action.payload.id}`);
+          await api.delete(`/api/incomes/${action.payload.id}`);
         }
         break;
       default:

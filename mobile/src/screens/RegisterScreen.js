@@ -21,6 +21,8 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register } = useAuth();
   const { colors, isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
@@ -266,8 +268,15 @@ export default function RegisterScreen({ navigation }) {
                 placeholderTextColor={colors.placeholder}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
               />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={colors.placeholder}
+                />
+              </TouchableOpacity>
             </View>
             {errors.password && (
               <Text style={styles.errorText}>{errors.password[0]}</Text>
@@ -286,8 +295,17 @@ export default function RegisterScreen({ navigation }) {
                 placeholderTextColor={colors.placeholder}
                 value={passwordConfirmation}
                 onChangeText={setPasswordConfirmation}
-                secureTextEntry
+                secureTextEntry={!showConfirmPassword}
               />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={colors.placeholder}
+                />
+              </TouchableOpacity>
             </View>
 
             {errors.general && (
