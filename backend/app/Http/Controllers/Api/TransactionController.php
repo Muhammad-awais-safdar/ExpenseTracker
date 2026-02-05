@@ -94,9 +94,14 @@ class TransactionController extends Controller
         
         $query = $expenses->union($incomes);
         
+        // Loans are excluded from general transaction list because they create 
+        // a corresponding Income/Expense record which represents the cash flow.
+        // Showing both is redundant.
+        /*
         if (!$categoryId) {
             $query = $query->union($loans);
         }
+        */
         
         $query->orderBy('date', 'desc')
               ->orderBy('created_at', 'desc');

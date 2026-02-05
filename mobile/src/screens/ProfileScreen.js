@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   SafeAreaView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import AuthService from "../services/authService";
 import { useTheme } from "../context/ThemeContext";
+import CustomAlert from "../components/ui/CustomAlert";
 
 export default function ProfileScreen({ navigation }) {
   const { colors, isDarkMode } = useTheme();
@@ -19,28 +19,49 @@ export default function ProfileScreen({ navigation }) {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [loading, setLoading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false });
 
   const handleUpdate = async () => {
     if (!name || !email) {
-      Alert.alert("Error", "Name and Email are required");
+      setAlertConfig({
+        visible: true,
+        title: "Validation Error",
+        message: "Name and Email are required",
+        type: "warning",
+        confirmText: "Okay",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
       return;
     }
 
     setLoading(true);
     try {
       const response = await AuthService.updateProfile({ name, email });
-      Alert.alert("Success", "Profile updated successfully");
-      // Update context/storage if necessary (AuthContext might need refresh logic or manual update)
-      // Assuming setUser updates the local state in context
       if (setUser) {
         setUser((prev) => ({ ...prev, name, email }));
       }
+
+      setAlertConfig({
+        visible: true,
+        title: "Success",
+        message: "Profile updated successfully",
+        type: "success",
+        confirmText: "Done",
+        onConfirm: () => {
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        },
+      });
     } catch (error) {
       console.log(error.response?.data);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Failed to update profile",
-      );
+      setAlertConfig({
+        visible: true,
+        title: "Error",
+        message: error.response?.data?.message || "Failed to update profile",
+        type: "error",
+        confirmText: "Retry",
+        onConfirm: () => setAlertConfig({ visible: false }),
+      });
     } finally {
       setLoading(false);
     }
@@ -120,6 +141,8 @@ export default function ProfileScreen({ navigation }) {
           )}
         </TouchableOpacity>
       </View>
+
+      <CustomAlert {...alertConfig} />
     </SafeAreaView>
   );
 }

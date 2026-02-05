@@ -35,7 +35,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('loans', LoanController::class);
     Route::apiResource('budgets', BudgetController::class);
-    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::apiResource('transactions', TransactionController::class);
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'show']);

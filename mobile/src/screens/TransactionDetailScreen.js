@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import CustomAlert from "../components/ui/CustomAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { getValidIconName } from "../utils/iconMap";
 import { useTheme } from "../context/ThemeContext";
@@ -15,6 +16,7 @@ import TransactionService from "../services/transactionService";
 export default function TransactionDetailScreen({ route, navigation }) {
   const { transaction } = route.params;
   const { colors, isDarkMode } = useTheme();
+  const [alertConfig, setAlertConfig] = React.useState({ visible: false });
 
   const isExpense = transaction.type === "expense";
   const isIncome = transaction.type === "income";
@@ -39,23 +41,31 @@ export default function TransactionDetailScreen({ route, navigation }) {
 
   // Handle Delete
   const handleDelete = () => {
-    Alert.alert("Delete Transaction", "Are you sure? This cannot be undone.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await TransactionService.delete(transaction.id, transaction.type);
-            navigation.goBack();
-            // Note: The previous screen needs to refresh.
-            // We can rely on useFocusEffect there or pass a callback.
-          } catch (error) {
-            Alert.alert("Error", "Failed to delete");
-          }
-        },
+    setAlertConfig({
+      visible: true,
+      title: "Delete Transaction",
+      message: "Are you sure? This cannot be undone.",
+      type: "warning",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onCancel: () => setAlertConfig({ visible: false }),
+      onConfirm: async () => {
+        try {
+          await TransactionService.delete(transaction.id, transaction.type);
+          setAlertConfig({ visible: false });
+          navigation.goBack();
+        } catch (error) {
+          setAlertConfig({
+            visible: true,
+            title: "Error",
+            message: "Failed to delete transaction",
+            type: "error",
+            confirmText: "Okay",
+            onConfirm: () => setAlertConfig({ visible: false }),
+          });
+        }
       },
-    ]);
+    });
   };
 
   const DetailRow = ({ label, value, valueStyle }) => (
@@ -196,6 +206,8 @@ export default function TransactionDetailScreen({ route, navigation }) {
           <Text style={styles.deleteText}>Delete Transaction</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <CustomAlert {...alertConfig} />
     </View>
   );
 }

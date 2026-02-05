@@ -21,7 +21,9 @@ export default function AddLoanScreen({ navigation }) {
   const [personName, setPersonName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("given"); // given, taken
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const { isOnline, addToQueue } = useSync();
@@ -184,7 +186,7 @@ export default function AddLoanScreen({ navigation }) {
       />
 
       <CustomDatePicker
-        label="Due Date (Optional)"
+        label="Due Date"
         value={dueDate}
         onChange={setDueDate}
       />

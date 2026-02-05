@@ -44,12 +44,13 @@ class LoanController extends Controller
             ]);
         } else {
             // Money Out -> Expense
-            $request->user()->expenses()->create([
+            $expense = $request->user()->expenses()->create([
                 'amount' => $loan->amount,
                 'description' => 'Loan Given: ' . $loan->person_name,
                 'date' => now(),
                 'category_id' => null
             ]);
+            \Illuminate\Support\Facades\Log::info('Loan Expense Created', ['id' => $expense->id]);
         }
 
         return response()->json($this->transformLoan($loan), 201);
