@@ -92,27 +92,35 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
-        // 6-Month Trend Data
-        $trends = collect(range(0, 5))->map(function ($i) use ($user) {
+        // 6-Month Trend Data (Optimized for PostgreSQL)
+        $startDate = now()->subMonths(5)->startOfMonth();
+        
+        $incomeData = $user->incomes()
+            ->where('date', '>=', $startDate)
+            ->selectRaw("to_char(date, 'YYYY') as year, to_char(date, 'MM') as month, sum(amount) as total")
+            ->groupBy('year', 'month')
+            ->get();
+
+        $expenseData = $user->expenses()
+            ->where('date', '>=', $startDate)
+            ->selectRaw("to_char(date, 'YYYY') as year, to_char(date, 'MM') as month, sum(amount) as total")
+            ->groupBy('year', 'month')
+            ->get();
+
+        $trends = collect(range(0, 5))->map(function ($i) use ($incomeData, $expenseData) {
             $date = now()->subMonths($i);
-            $month = $date->format('M'); 
-            $monthNum = $date->month;
-            $year = $date->year;
+            $yearStr = $date->format('Y');
+            $monthStr = $date->format('m');
+            $monthLabel = $date->format('M');
 
-            $income = (float) $user->incomes()
-                ->whereYear('date', $year)
-                ->whereMonth('date', $monthNum)
-                ->sum('amount');
-
-            $expense = (float) $user->expenses()
-                ->whereYear('date', $year)
-                ->whereMonth('date', $monthNum)
-                ->sum('amount');
+            // Find matching data in collection (done in memory, much faster than DB query loop)
+            $income = $incomeData->first(fn($item) => $item->year == $yearStr && $item->month == $monthStr)?->total ?? 0;
+            $expense = $expenseData->first(fn($item) => $item->year == $yearStr && $item->month == $monthStr)?->total ?? 0;
 
             return [
-                'month' => $month,
-                'income' => $income,
-                'expense' => $expense
+                'month' => $monthLabel,
+                'income' => (float) $income,
+                'expense' => (float) $expense
             ];
         })->reverse()->values(); 
 
