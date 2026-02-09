@@ -2,6 +2,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 import api from "../api/axios";
+import TransactionService from "../services/transactionService";
 
 const ExportService = {
   /**
@@ -39,9 +40,25 @@ const ExportService = {
   /**
    * Export to PDF
    */
-  exportToPdf: async (data, periodLabel) => {
+  exportToPdf: async (data, periodLabel, filters = {}) => {
     try {
-      const html = createPdfHtml(data, periodLabel);
+      // 1. Fetch Full Transaction List
+      const { start_date, end_date } = filters;
+      const transactionParams = {
+        per_page: 500, // Fetch up to 500 for the report
+        start_date,
+        end_date,
+      };
+
+      const transactionsResponse =
+        await TransactionService.getAll(transactionParams);
+      const transactions =
+        transactionsResponse.data.data || transactionsResponse.data || [];
+
+      // 2. Generate HTML
+      const html = createPdfHtml(data, periodLabel, transactions);
+
+      // 3. Generate PDF
       const { uri } = await Print.printToFileAsync({ html });
 
       if (await Sharing.isAvailableAsync()) {
@@ -54,19 +71,59 @@ const ExportService = {
   },
 };
 
-const createPdfHtml = (data, periodLabel) => {
+const createPdfHtml = (data, periodLabel, transactions) => {
   const { summary, categories, range, chart_data } = data;
   const today = new Date().toLocaleDateString();
   const themeColor = "#4F46E5"; // Primary Color
 
-  // Prepare chart data for Chart.js
-  const chartLabels = JSON.stringify(chart_data.map((d) => d.label));
-  const expenseData = JSON.stringify(chart_data.map((d) => d.expense));
-  const incomeData = JSON.stringify(chart_data.map((d) => d.income));
+  // QuickChart URLs
+  const trendChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "bar",
+      data: {
+        labels: chart_data.map((d) => d.label),
+        datasets: [
+          {
+            label: "Income",
+            data: chart_data.map((d) => d.income),
+            backgroundColor: "#10B981",
+          },
+          {
+            label: "Expense",
+            data: chart_data.map((d) => d.expense),
+            backgroundColor: "#EF4444",
+          },
+        ],
+      },
+      options: {
+        legend: { display: true },
+        title: { display: true, text: "Income vs Expense" },
+        scales: { yAxes: [{ ticks: { beginAtZero: true } }] },
+      },
+    }),
+  )}`;
 
-  const catNames = JSON.stringify(categories.map((c) => c.name));
-  const catTotals = JSON.stringify(categories.map((c) => c.total));
-  const catColors = JSON.stringify(categories.map((c) => c.color));
+  const categoryChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(
+    JSON.stringify({
+      type: "doughnut",
+      data: {
+        labels: categories.map((c) => c.name),
+        datasets: [
+          {
+            data: categories.map((c) => c.total),
+            backgroundColor: categories.map((c) => c.color),
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          doughnutlabel: {
+            labels: [{ text: "Total", font: { size: 20 } }],
+          },
+        },
+      },
+    }),
+  )}`;
 
   return `
     <!DOCTYPE html>
@@ -74,7 +131,6 @@ const createPdfHtml = (data, periodLabel) => {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
         <title>Financial Report</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
           
@@ -166,13 +222,18 @@ const createPdfHtml = (data, periodLabel) => {
           
           .chart-box {
             flex: 1;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border: 1px solid #E5E7EB;
             border-radius: 12px;
             padding: 15px;
             background: #fff;
+            text-align: center;
           }
-
+          
+          .chart-img {
+            max-width: 100%;
+            height: auto;
+          }
+          
           table { 
             width: 100%; 
             border-collapse: collapse; 
@@ -204,6 +265,9 @@ const createPdfHtml = (data, periodLabel) => {
             border-radius: 50%;
             margin-right: 8px;
           }
+          
+          .tx-income { color: #10B981; font-weight: 600; }
+          .tx-expense { color: #EF4444; font-weight: 600; }
 
           .footer { 
             margin-top: 60px; 
@@ -243,14 +307,13 @@ const createPdfHtml = (data, periodLabel) => {
         </div>
 
         <div class="charts-container">
-          <div class="chart-box" style="flex: 2;">
-            <canvas id="trendChart"></canvas>
+          <div class="chart-box">
+            <img src="${trendChartUrl}" class="chart-img" />
           </div>
-          <div class="chart-box" style="flex: 1;">
-            <canvas id="categoryChart"></canvas>
+          <div class="chart-box">
+            <img src="${categoryChartUrl}" class="chart-img" />
           </div>
         </div>
-
         <h2>Category Breakdown</h2>
         <table>
           <thead>
@@ -277,63 +340,44 @@ const createPdfHtml = (data, periodLabel) => {
               .join("")}
           </tbody>
         </table>
+        <div style="page-break-after: always;"></div>
+
+        <h2>Transaction History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category/Type</th>
+              <th>Description</th>
+              <th style="text-align: right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${transactions
+              .map((t) => {
+                const isIncome = t.type === "income" || t.type === "loan_taken";
+                const amountClass = isIncome ? "tx-income" : "tx-expense";
+                const prefix = isIncome ? "+" : "-";
+                const categoryName =
+                  t.category?.name || t.type.toUpperCase().replace("_", " ");
+                return `
+              <tr>
+                <td>${t.date}</td>
+                <td>${categoryName}</td>
+                <td>${t.title}</td>
+                <td style="text-align: right;" class="${amountClass}">
+                    ${prefix} Rs ${Math.abs(t.amount).toLocaleString()}
+                </td>
+              </tr>
+            `;
+              })
+              .join("")}
+          </tbody>
+        </table>
 
         <div class="footer">
           Generated by Expense Tracker App &copy; ${new Date().getFullYear()}
         </div>
-
-        <script>
-          // Render Trend Chart
-          new Chart(document.getElementById('trendChart'), {
-            type: 'bar',
-            data: {
-              labels: ${chartLabels},
-              datasets: [{
-                label: 'Income',
-                data: ${incomeData},
-                backgroundColor: '#10B981',
-                borderRadius: 4
-              }, {
-                label: 'Expense',
-                data: ${expenseData},
-                backgroundColor: '#EF4444',
-                borderRadius: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Income vs Expense Trend' }
-              },
-              scales: {
-                y: { beginAtZero: true, grid: { color: '#F3F4F6' } },
-                x: { grid: { display: false } }
-              }
-            }
-          });
-
-          // Render Category Chart
-          new Chart(document.getElementById('categoryChart'), {
-            type: 'doughnut',
-            data: {
-              labels: ${catNames},
-              datasets: [{
-                data: ${catTotals},
-                backgroundColor: ${catColors},
-                borderWidth: 0
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { display: false },
-                title: { display: true, text: 'Expense Distribution' }
-              },
-              cutout: '70%'
-            }
-          });
-        </script>
       </body>
     </html>
   `;
