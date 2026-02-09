@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\RecurringTransactionController;
+use App\Http\Controllers\Api\AnalyticsController;
 
 Route::post('/mobile/register', [MobileAuthController::class, 'register']);
 Route::post('/mobile/login', [MobileAuthController::class, 'login']);
@@ -45,6 +46,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Export
     Route::get('/export/transactions', [ExportController::class, 'export']);
     
+    // Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'index']);
+
     // Recurring
     Route::apiResource('recurring', RecurringTransactionController::class);
 });

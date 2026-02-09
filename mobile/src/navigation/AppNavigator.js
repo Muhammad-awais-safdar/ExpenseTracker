@@ -14,10 +14,11 @@ import IncomeScreen from "../screens/IncomeScreen";
 import AddIncomeScreen from "../screens/AddIncomeScreen";
 import LoansScreen from "../screens/LoansScreen";
 import AddLoanScreen from "../screens/AddLoanScreen";
+import AnalyticsScreen from "../screens/AnalyticsScreen";
 import BudgetsScreen from "../screens/BudgetsScreen";
 import AddBudgetScreen from "../screens/AddBudgetScreen";
 import AllTransactionsScreen from "../screens/AllTransactionsScreen"; // Import New Screen
-import AnalyticsScreen from "../screens/AnalyticsScreen";
+
 import SettingsScreen from "../screens/SettingsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
