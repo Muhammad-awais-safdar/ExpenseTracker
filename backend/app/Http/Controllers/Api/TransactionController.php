@@ -67,7 +67,8 @@ class TransactionController extends Controller
             'search' => $search
         ]);
         
-        $transactions = $query->paginate(20);
+        $perPage = $request->input('per_page', 20);
+        $transactions = $query->paginate($perPage);
 
         // Transform collection to restore nested category structure for frontend
         $transactions->getCollection()->transform(function ($item) {

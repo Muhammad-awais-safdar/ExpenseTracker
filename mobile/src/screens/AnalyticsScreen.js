@@ -34,7 +34,19 @@ export default function AnalyticsScreen({ navigation }) {
         onPress: async () => {
           try {
             setLoading(true);
-            await ExportService.exportToPdf(data, period.toUpperCase());
+            const filters = {};
+            if (period === "custom") {
+              filters.start_date = startDate.toISOString().split("T")[0];
+              filters.end_date = endDate.toISOString().split("T")[0];
+            } else if (data?.range) {
+              filters.start_date = data.range.start;
+              filters.end_date = data.range.end;
+            }
+            await ExportService.exportToPdf(
+              data,
+              period.toUpperCase(),
+              filters,
+            );
           } catch (e) {
             Alert.alert("Error", "Failed to generate PDF");
           } finally {

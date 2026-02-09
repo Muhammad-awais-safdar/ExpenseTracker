@@ -30,8 +30,35 @@ class ExportController extends Controller
             'Expires' => '0',
         ];
 
-        $callback = function () use ($query) {
+        // Calculate Totals for Summary
+        $summaryQuery = clone $query;
+        $allTransactions = $summaryQuery->get();
+        
+        $totalIncome = 0;
+        $totalExpense = 0;
+        
+        foreach ($allTransactions as $t) {
+            if ($t->type === 'income' || $t->type === 'loan_taken') {
+                $totalIncome += $t->amount;
+            } else {
+                $totalExpense += $t->amount;
+            }
+        }
+        
+        $balance = $totalIncome - $totalExpense;
+
+        $callback = function () use ($query, $totalIncome, $totalExpense, $balance, $request) {
             $file = fopen('php://output', 'w');
+
+            // Summary Section
+            fputcsv($file, ['EXPENSE TRACKER REPORT']);
+            fputcsv($file, ['Period:', ($request->input('start_date') ?? 'All Time') . ' to ' . ($request->input('end_date') ?? 'Present')]);
+            fputcsv($file, []); // Empty Row
+            fputcsv($file, ['Total Income:', $totalIncome]);
+            fputcsv($file, ['Total Expense:', $totalExpense]);
+            fputcsv($file, ['Net Balance:', $balance]);
+            fputcsv($file, []); // Empty Row
+            fputcsv($file, []); // Empty Row
 
             // Header Row
             fputcsv($file, ['ID', 'Date', 'Type', 'Category', 'Description/Source', 'Debit', 'Credit']);
