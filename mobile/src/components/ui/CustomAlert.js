@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
   },
   container: {
     borderRadius: 24,
+    backgroundColor: "#fff", // Fixed: Added background color
     padding: 24,
     width: "85%",
     maxWidth: 340,

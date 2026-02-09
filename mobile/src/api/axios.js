@@ -1,7 +1,9 @@
 import axios from "axios";
 import { Alert } from "react-native";
 
-const API_URL = process.env.API_URL;
+const API_URL =
+  process.env.API_URL || "https://expense-backend-tnag.onrender.com"; // Fallback ifenv fails
+console.log("API_URL configured as:", API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
