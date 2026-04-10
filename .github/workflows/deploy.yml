@@ -51,15 +51,14 @@ jobs:
             echo "📦 Install dependencies"
             composer install --no-dev --optimize-autoloader
 
+            echo "🛢️ Run migrations"
+            php artisan migrate --force
+
             echo "⚙️ Laravel optimize"
             php artisan config:clear
-            php artisan cache:clear
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-
-            echo "🛢️ Run migrations"
-            php artisan migrate --force
 
             echo "🔐 Fix permissions"
             sudo chown -R www-data:www-data /var/www/expensetracker
