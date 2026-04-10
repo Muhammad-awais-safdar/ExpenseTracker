@@ -17,10 +17,36 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /var/www/expensetracker/backend
+            set -e
+            cd /var/www/expensetracker
 
             echo "📥 Pull latest code"
+            git fetch origin main
+            git reset --hard origin/main
             git pull origin main
+
+            echo "🧹 Flatten project: keep .env, promote /backend to root"
+            if [ -f ".env" ]; then
+              cp .env /tmp/expensetracker.env.bak
+            fi
+
+            # Remove everything except backend source, git metadata, and .env
+            find . -mindepth 1 -maxdepth 1 \
+              ! -name backend \
+              ! -name .git \
+              ! -name .env \
+              -exec rm -rf {} +
+
+            # Move backend contents to root (including dotfiles)
+            shopt -s dotglob nullglob
+            mv backend/* .
+            shopt -u dotglob nullglob
+            rmdir backend || true
+
+            # Restore .env to ensure it is never overwritten
+            if [ -f "/tmp/expensetracker.env.bak" ]; then
+              mv -f /tmp/expensetracker.env.bak .env
+            fi
 
             echo "📦 Install dependencies"
             composer install --no-dev --optimize-autoloader
