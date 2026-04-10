@@ -1,0 +1,46 @@
+name: Deploy ExpenseTracker
+
+on:
+  push:
+    branches:
+      - main   # change if using another branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /var/www/expensetracker/backend
+
+            echo "📥 Pull latest code"
+            git pull origin main
+
+            echo "📦 Install dependencies"
+            composer install --no-dev --optimize-autoloader
+
+            echo "⚙️ Laravel optimize"
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "🛢️ Run migrations"
+            php artisan migrate --force
+
+            echo "🔐 Fix permissions"
+            sudo chown -R www-data:www-data /var/www/expensetracker
+            sudo chmod -R 775 storage bootstrap/cache
+
+            echo "🔄 Restart services"
+            sudo systemctl restart php8.2-fpm
+            sudo systemctl reload nginx
+
+            echo "✅ Deployment complete"
