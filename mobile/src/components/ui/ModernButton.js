@@ -14,6 +14,8 @@ export default function ModernButton({
   disabled,
   variant = "primary", // primary, secondary, danger
   icon: Icon,
+  style,
+  textStyle,
 }) {
   const getColors = () => {
     if (disabled) return ["#E5E7EB", "#D1D5DB"]; // Keep gray for disabled
@@ -47,6 +49,7 @@ export default function ModernButton({
         style={[
           styles.gradient,
           variant === "secondary" && styles.secondaryBorder,
+          style,
         ]}
       >
         {loading ? (
@@ -54,7 +57,7 @@ export default function ModernButton({
         ) : (
           <>
             {Icon && <Icon style={{ marginRight: 8 }} color={getTextColor()} />}
-            <Text style={[styles.text, { color: getTextColor() }]}>
+            <Text style={[styles.text, { color: getTextColor() }, textStyle]}>
               {title}
             </Text>
           </>

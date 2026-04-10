@@ -44,13 +44,12 @@ class LoanController extends Controller
             ]);
         } else {
             // Money Out -> Expense
-            $expense = $request->user()->expenses()->create([
+            $request->user()->expenses()->create([
                 'amount' => $loan->amount,
                 'description' => 'Loan Given: ' . $loan->person_name,
                 'date' => now(),
                 'category_id' => null
             ]);
-            \Illuminate\Support\Facades\Log::info('Loan Expense Created', ['id' => $expense->id]);
         }
 
         return response()->json($this->transformLoan($loan), 201);
@@ -66,11 +65,6 @@ class LoanController extends Controller
 
     public function update(Request $request, Loan $loan)
     {
-        \Illuminate\Support\Facades\Log::info('Update Loan Request', [
-            'loan_id' => $loan->id,
-            'input' => $request->all()
-        ]);
-
         if ($loan->user_id !== $request->user()->id) {
             abort(403);
         }
@@ -84,8 +78,6 @@ class LoanController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        \Illuminate\Support\Facades\Log::info('Validated Data', $validated);
-
         // Check if status is changing to 'paid'
         $wasPending = $loan->status === 'pending';
         $isNowPaid = isset($validated['status']) && $validated['status'] === 'paid';
@@ -93,8 +85,6 @@ class LoanController extends Controller
         $loan->update($validated);
         
         if ($wasPending && $isNowPaid) {
-            \Illuminate\Support\Facades\Log::info('Loan Settled - Creating Transaction');
-            
             if ($loan->type === 'given') {
                 // I lent money, now getting it back -> Income
                 $request->user()->incomes()->create([
@@ -113,8 +103,6 @@ class LoanController extends Controller
                 ]);
             }
         }
-        
-        \Illuminate\Support\Facades\Log::info('Loan Updated', $loan->fresh()->toArray());
 
         return $this->transformLoan($loan);
     }

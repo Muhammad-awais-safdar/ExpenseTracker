@@ -41,7 +41,7 @@ export default function LoginScreen({ navigation }) {
     try {
       await loginWithBiometrics();
     } catch (e) {
-      console.log("Bio login failed or cancelled");
+      // user cancelled biometric prompt or auth failed
     }
   };
 

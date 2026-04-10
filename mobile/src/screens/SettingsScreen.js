@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useReminders } from "../context/ReminderContext";
+import { usePinLock } from "../context/PinLockContext";
 import { Ionicons } from "@expo/vector-icons";
 import ExportService from "../services/exportService";
 
@@ -26,8 +28,12 @@ export default function SettingsScreen({ navigation }) {
     enableBiometrics,
     disableBiometrics,
   } = useAuth();
+  const { isReminderEnabled, toggleReminders } = useReminders();
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+  const [pin, setPin] = useState("");
+  const { isPinEnabled, enablePin, disablePin } = usePinLock();
 
   const handleBiometricToggle = async (value) => {
     if (value) {
@@ -76,10 +82,37 @@ export default function SettingsScreen({ navigation }) {
     ]);
   };
 
+  const handlePinToggle = async (value) => {
+    if (value) {
+      setShowPinPrompt(true);
+      return;
+    }
+    Alert.alert("Disable PIN Lock", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Disable",
+        onPress: async () => {
+          await disablePin();
+        },
+      },
+    ]);
+  };
+
+  const confirmEnablePin = async () => {
+    if (!/^\d{4}$/.test(pin)) {
+      Alert.alert("Invalid PIN", "PIN must be exactly 4 digits.");
+      return;
+    }
+    await enablePin(pin);
+    setPin("");
+    setShowPinPrompt(false);
+    Alert.alert("Success", "PIN lock enabled");
+  };
+
   const handleExport = async () => {
     try {
       Alert.alert("Exporting", "Generating CSV file...");
-      await ExportService.downloadTransactions();
+      await ExportService.exportToCsv();
     } catch (e) {
       Alert.alert("Error", "Failed to export transactions");
     }
@@ -106,6 +139,19 @@ export default function SettingsScreen({ navigation }) {
     {
       title: "Security",
       items: [
+        {
+          label: "PIN App Lock",
+          icon: "keypad-outline",
+          action: () => handlePinToggle(!isPinEnabled),
+          color: "#0EA5E9",
+          rightElement: (
+            <Switch
+              value={isPinEnabled}
+              onValueChange={handlePinToggle}
+              trackColor={{ false: "#767577", true: "#0EA5E9" }}
+            />
+          ),
+        },
         {
           label: "Biometric Login",
           icon: "finger-print-outline",
@@ -159,10 +205,41 @@ export default function SettingsScreen({ navigation }) {
           color: "#EC4899", // Pink
         },
         {
-          label: "Notifications (Coming Soon)",
+          label: "Sync Conflicts",
+          icon: "sync-outline",
+          action: () => navigation.navigate("SyncConflicts"),
+          color: colors.info,
+        },
+        {
+          label: "Import CSV Data",
+          icon: "cloud-upload-outline",
+          action: () => navigation.navigate("ImportData"),
+          color: colors.primary,
+        },
+        {
+          label: "Backup & Restore",
+          icon: "server-outline",
+          action: () => navigation.navigate("BackupRestore"),
+          color: "#14B8A6",
+        },
+        {
+          label: "Financial Health",
+          icon: "pulse-outline",
+          action: () => navigation.navigate("FinancialHealth"),
+          color: "#A855F7",
+        },
+        {
+          label: "Reminders",
           icon: "notifications-outline",
-          action: () => {}, // Placeholder
+          action: () => toggleReminders(!isReminderEnabled),
           color: colors.warning,
+          rightElement: (
+            <Switch
+              value={isReminderEnabled}
+              onValueChange={toggleReminders}
+              trackColor={{ false: "#767577", true: colors.warning }}
+            />
+          ),
         },
         {
           label: "About",
@@ -411,6 +488,46 @@ export default function SettingsScreen({ navigation }) {
                   <TouchableOpacity
                     style={styles.modalButtonConfirm}
                     onPress={confirmEnableBiometrics}
+                  >
+                    <Text style={styles.modalButtonTextConfirm}>Enable</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
+            visible={showPinPrompt}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowPinPrompt(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Set 4-Digit PIN</Text>
+                <Text style={styles.modalText}>
+                  This PIN will be required when reopening the app.
+                </Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="1234"
+                  placeholderTextColor={colors.placeholder}
+                  value={pin}
+                  onChangeText={(v) => setPin(v.replace(/\D/g, "").slice(0, 4))}
+                  secureTextEntry
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalButtonCancel}
+                    onPress={() => setShowPinPrompt(false)}
+                  >
+                    <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalButtonConfirm}
+                    onPress={confirmEnablePin}
                   >
                     <Text style={styles.modalButtonTextConfirm}>Enable</Text>
                   </TouchableOpacity>

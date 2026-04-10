@@ -1,8 +1,11 @@
 import React from "react";
+import { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
+import { usePinLock } from "../context/PinLockContext";
 import { ActivityIndicator, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import all screens
 import LoginScreen from "../screens/LoginScreen";
@@ -25,15 +28,33 @@ import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import RecurringTransactionsScreen from "../screens/RecurringTransactionsScreen";
 import AddRecurringScreen from "../screens/AddRecurringScreen";
 import TransactionDetailScreen from "../screens/TransactionDetailScreen";
+import PinUnlockScreen from "../screens/PinUnlockScreen";
+import OnboardingScreen from "../screens/OnboardingScreen";
+import SyncConflictsScreen from "../screens/SyncConflictsScreen";
+import ImportDataScreen from "../screens/ImportDataScreen";
+import BackupRestoreScreen from "../screens/BackupRestoreScreen";
+import FinancialHealthScreen from "../screens/FinancialHealthScreen";
 
 const Stack = createNativeStackNavigator();
 
-import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 import { DefaultTheme, DarkTheme } from "@react-navigation/native";
 
 function AppContent() {
   const { token, isSplashLoading } = useAuth();
+  const { isPinEnabled, isLocked } = usePinLock();
   const { isDarkMode, colors } = useTheme();
+  const [isOnboardingChecked, setIsOnboardingChecked] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const loadOnboarding = async () => {
+      const seen = await AsyncStorage.getItem("onboarding_seen");
+      setShowOnboarding(!seen);
+      setIsOnboardingChecked(true);
+    };
+    loadOnboarding();
+  }, []);
 
   // Custom Navigation Theme
   const navigationTheme = {
@@ -49,7 +70,7 @@ function AppContent() {
     },
   };
 
-  if (isSplashLoading) {
+  if (isSplashLoading || !isOnboardingChecked) {
     return (
       <View
         style={{
@@ -75,6 +96,13 @@ function AppContent() {
         }}
       >
         {token ? (
+          isPinEnabled && isLocked ? (
+            <Stack.Screen
+              name="PinUnlock"
+              component={PinUnlockScreen}
+              options={{ headerShown: false }}
+            />
+          ) : (
           <>
             <Stack.Screen
               name="Home"
@@ -150,20 +178,54 @@ function AppContent() {
               component={AddRecurringScreen}
               options={{ title: "New Recurring Rule" }}
             />
+            <Stack.Screen
+              name="SyncConflicts"
+              component={SyncConflictsScreen}
+              options={{ title: "Sync Conflicts" }}
+            />
+            <Stack.Screen
+              name="ImportData"
+              component={ImportDataScreen}
+              options={{ title: "Import CSV" }}
+            />
+            <Stack.Screen
+              name="BackupRestore"
+              component={BackupRestoreScreen}
+              options={{ title: "Backup & Restore" }}
+            />
+            <Stack.Screen
+              name="FinancialHealth"
+              component={FinancialHealthScreen}
+              options={{ title: "Financial Health" }}
+            />
           </>
+          )
         ) : (
-          <>
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Register"
-              component={RegisterScreen}
-              options={{ headerShown: false }}
-            />
-          </>
+          showOnboarding ? (
+            <Stack.Screen name="Onboarding" options={{ headerShown: false }}>
+              {() => (
+                <OnboardingScreen
+                  onDone={async () => {
+                    await AsyncStorage.setItem("onboarding_seen", "1");
+                    setShowOnboarding(false);
+                  }}
+                />
+              )}
+            </Stack.Screen>
+          ) : (
+            <>
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Register"
+                component={RegisterScreen}
+                options={{ headerShown: false }}
+              />
+            </>
+          )
         )}
       </Stack.Navigator>
     </NavigationContainer>

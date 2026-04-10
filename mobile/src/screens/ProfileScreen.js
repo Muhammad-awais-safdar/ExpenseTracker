@@ -53,7 +53,6 @@ export default function ProfileScreen({ navigation }) {
         },
       });
     } catch (error) {
-      console.log(error.response?.data);
       setAlertConfig({
         visible: true,
         title: "Error",

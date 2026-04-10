@@ -28,9 +28,9 @@ export default function RecurringTransactionsScreen({ navigation }) {
   const loadRules = async () => {
     try {
       const data = await RecurringService.getAll();
-      setRules(data);
+      setRules(Array.isArray(data?.data) ? data.data : (data || []));
     } catch (error) {
-      console.log("Error loading recurring rules:", error);
+      console.error("Error loading recurring rules:", error);
     } finally {
       setLoading(false);
     }

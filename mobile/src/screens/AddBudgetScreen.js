@@ -92,7 +92,6 @@ export default function AddBudgetScreen({ navigation }) {
         },
       });
     } catch (error) {
-      console.log(error.response?.data);
       setAlertConfig({
         visible: true,
         title: "Error",

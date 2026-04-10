@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useReminders } from "../context/ReminderContext";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import LottieView from "lottie-react-native";
@@ -23,10 +24,12 @@ import MemoryCache from "../utils/memoryCache";
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const { reminders, refreshReminders, isReminderEnabled } = useReminders();
   const { colors, isDarkMode } = useTheme();
   const [dashboardData, setDashboardData] = useState(
     MemoryCache.getStale("dashboard") || null,
   );
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [loading, setLoading] = useState(!dashboardData);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -35,24 +38,30 @@ export default function HomeScreen({ navigation }) {
   const contentAnim = useRef(new Animated.Value(50)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
 
-  const loadDashboard = async () => {
-    console.log("[HomeScreen] loadDashboard started");
+  const loadDashboard = async (dateToLoad = selectedDate) => {
+    const month = dateToLoad.getMonth() + 1;
+    const year = dateToLoad.getFullYear();
+    const cacheKey = `dashboard_${year}_${month}`;
+
     // 1. Instant Cache Load (Stale-While-Revalidate)
-    const cached = MemoryCache.getStale("dashboard");
+    const cached =
+      MemoryCache.getStale(cacheKey) || MemoryCache.getStale("dashboard");
     if (cached) {
       setDashboardData(cached);
       setLoading(false);
+    } else {
+      setLoading(!dashboardData);
     }
 
     try {
-      const data = await DashboardService.getSummary();
+      const data = await DashboardService.getSummary(month, year);
 
       setDashboardData(data);
+      await MemoryCache.set(cacheKey, data);
       await MemoryCache.set("dashboard", data);
     } catch (error) {
       console.error("[HomeScreen] Dashboard fetch error:", error);
       if (error.response?.status === 401) {
-        console.log("[HomeScreen] 401 detected, logging out");
         logout(); // Force logout on 401
       }
     } finally {
@@ -61,6 +70,13 @@ export default function HomeScreen({ navigation }) {
         setRefreshing(false);
       }
     }
+  };
+
+  const changeMonth = (delta) => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    setSelectedDate(newDate);
+    loadDashboard(newDate);
   };
 
   const mounted = useRef(true);
@@ -74,6 +90,9 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       loadDashboard();
+      if (isReminderEnabled) {
+        refreshReminders({ showAlert: true });
+      }
 
       Animated.parallel([
         Animated.timing(balanceAnim, {
@@ -207,6 +226,52 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* Month Selector */}
+        <View style={styles.monthSelector}>
+          <TouchableOpacity
+            onPress={() => changeMonth(-1)}
+            style={styles.monthBtn}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={isDarkMode ? colors.text : "rgba(255,255,255,0.8)"}
+            />
+          </TouchableOpacity>
+          <Text
+            style={[
+              styles.monthText,
+              { color: isDarkMode ? colors.text : "#fff" },
+            ]}
+          >
+            {selectedDate.toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </Text>
+          <TouchableOpacity
+            onPress={() => changeMonth(1)}
+            style={styles.monthBtn}
+            disabled={
+              selectedDate.getMonth() === new Date().getMonth() &&
+              selectedDate.getFullYear() === new Date().getFullYear()
+            }
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isDarkMode ? colors.text : "rgba(255,255,255,0.8)"}
+              style={{
+                opacity:
+                  selectedDate.getMonth() === new Date().getMonth() &&
+                  selectedDate.getFullYear() === new Date().getFullYear()
+                    ? 0.3
+                    : 1,
+              }}
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Balance Card */}
         <Animated.View
           style={[
@@ -324,6 +389,29 @@ export default function HomeScreen({ navigation }) {
             transform: [{ translateY: contentAnim }],
           }}
         >
+          {isReminderEnabled && reminders.length > 0 && (
+            <View
+              style={[
+                styles.reminderCard,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(245, 158, 11, 0.15)"
+                    : "#FFFBEB",
+                  borderColor: colors.warning,
+                },
+              ]}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={18}
+                color={colors.warning}
+              />
+              <Text style={[styles.reminderText, { color: colors.text }]}>
+                {reminders[0].message}
+              </Text>
+            </View>
+          )}
+
           {/* Actions Grid */}
           <View style={styles.actionsGrid}>
             <QuickAction
@@ -473,6 +561,24 @@ const styles = StyleSheet.create({
   username: { fontSize: 24, fontWeight: "bold" },
   logoutBtn: { padding: 5 },
 
+  monthSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  monthBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  monthText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+
   balanceCard: {
     borderRadius: 20,
     padding: 20,
@@ -498,6 +604,20 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: { marginTop: 10, paddingHorizontal: 20 },
+  reminderCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  reminderText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "500",
+  },
 
   actionsGrid: {
     flexDirection: "row",

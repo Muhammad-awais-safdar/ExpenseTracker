@@ -1,13 +1,16 @@
 import api from "../api/axios";
 
 const DashboardService = {
-  getSummary: async () => {
-    const response = await api.get("/api/dashboard");
+  getSummary: async (month, year) => {
+    let url = "/api/dashboard";
+    if (month && year) {
+      url += `?month=${month}&year=${year}`;
+    }
+    const response = await api.get(url);
     return response.data;
   },
-  getDashboardData: async () => {
-    const response = await api.get("/api/dashboard");
-    return response.data;
+  getDashboardData: async (month, year) => {
+    return DashboardService.getSummary(month, year);
   },
 };
 

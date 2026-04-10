@@ -15,6 +15,14 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
+        // Get requested month/year or default to current
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+        
+        // Calculate start and end date for the selected period
+        $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
         // Active Loans (for display only)
         $loansGiven = (float) $user->loans()->where('type', 'given')->where('status', 'pending')->sum('amount');
         $loansTaken = (float) $user->loans()->where('type', 'taken')->where('status', 'pending')->sum('amount');
@@ -23,16 +31,16 @@ class DashboardController extends Controller
         $totalIncome = (float) $user->incomes()->sum('amount');
         $totalExpense = (float) $user->expenses()->sum('amount');
         
-        // Balance
+        // Balance (All time)
         $balance = $totalIncome - $totalExpense;
 
-        // Monthly Stats (Current Month)
-        $currentMonth = now()->startOfMonth();
-        $monthlyIncome = (float) $user->incomes()->where('date', '>=', $currentMonth)->sum('amount');
-        $monthlyExpense = (float) $user->expenses()->where('date', '>=', $currentMonth)->sum('amount');
+        // Monthly Stats (For Selected Month)
+        $monthlyIncome = (float) $user->incomes()->whereBetween('date', [$startDate, $endDate])->sum('amount');
+        $monthlyExpense = (float) $user->expenses()->whereBetween('date', [$startDate, $endDate])->sum('amount');
 
-        // Category Breakdown
+        // Category Breakdown (For Selected Month)
         $expenseByCategory = $user->expenses()
+            ->whereBetween('date', [$startDate, $endDate])
             ->select('category_id', DB::raw('sum(amount) as total'))
             ->with(['category:id,name,color,icon'])
             ->groupBy('category_id')
@@ -66,8 +74,9 @@ class DashboardController extends Controller
             return $item;
         };
 
-        // Recent Transactions (limit 5)
+        // Recent Transactions (limit 5, For Selected Month)
         $recentExpenses = $user->expenses()
+            ->whereBetween('date', [$startDate, $endDate])
             ->with('category:id,name,icon,color')
             ->latest('date')
             ->limit(5)
@@ -75,6 +84,7 @@ class DashboardController extends Controller
             ->map(fn($item) => $formatTransaction($item, 'expense'));
 
         $recentIncomes = $user->incomes()
+            ->whereBetween('date', [$startDate, $endDate])
             ->with('category:id,name,icon,color')
             ->latest('date')
             ->limit(5)
@@ -92,23 +102,23 @@ class DashboardController extends Controller
             ->take(5)
             ->values();
 
-        // 6-Month Trend Data (Optimized for PostgreSQL)
-        $startDate = now()->subMonths(5)->startOfMonth();
+        // 6-Month Trend Data (Based on selected year/month backwards)
+        $trendStartDate = $startDate->copy()->subMonths(5)->startOfMonth();
         
         $incomeData = $user->incomes()
-            ->where('date', '>=', $startDate)
+            ->whereBetween('date', [$trendStartDate, $endDate])
             ->selectRaw("to_char(date, 'YYYY') as year, to_char(date, 'MM') as month, sum(amount) as total")
             ->groupBy('year', 'month')
             ->get();
 
         $expenseData = $user->expenses()
-            ->where('date', '>=', $startDate)
+            ->whereBetween('date', [$trendStartDate, $endDate])
             ->selectRaw("to_char(date, 'YYYY') as year, to_char(date, 'MM') as month, sum(amount) as total")
             ->groupBy('year', 'month')
             ->get();
 
-        $trends = collect(range(0, 5))->map(function ($i) use ($incomeData, $expenseData) {
-            $date = now()->subMonths($i);
+        $trends = collect(range(0, 5))->map(function ($i) use ($incomeData, $expenseData, $startDate) {
+            $date = $startDate->copy()->subMonths($i);
             $yearStr = $date->format('Y');
             $monthStr = $date->format('m');
             $monthLabel = $date->format('M');
@@ -125,6 +135,12 @@ class DashboardController extends Controller
         })->reverse()->values(); 
 
         return response()->json([
+            'meta' => [
+                'month' => (int) $month,
+                'year' => (int) $year,
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString()
+            ],
             'summary' => [
                 'total_income' => $totalIncome,
                 'total_expense' => $totalExpense,

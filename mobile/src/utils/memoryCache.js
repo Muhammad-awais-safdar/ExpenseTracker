@@ -18,7 +18,6 @@ const MemoryCache = {
           }
         });
       }
-      console.log("[Cache] Initialized", Object.keys(memoryStore));
     } catch (e) {
       console.error("Cache init failed", e);
     }

@@ -52,8 +52,7 @@ const ExportService = {
 
       const transactionsResponse =
         await TransactionService.getAll(transactionParams);
-      const transactions =
-        transactionsResponse.data.data || transactionsResponse.data || [];
+      const transactions = transactionsResponse.data || [];
 
       // 2. Generate HTML
       const html = createPdfHtml(data, periodLabel, transactions);

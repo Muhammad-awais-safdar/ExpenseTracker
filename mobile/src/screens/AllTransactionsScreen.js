@@ -28,6 +28,7 @@ export default function AllTransactionsScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Search State
   const [searchText, setSearchText] = useState("");
@@ -63,7 +64,7 @@ export default function AllTransactionsScreen({ navigation }) {
       const data = await CategoryService.getAll();
       setCategories(data);
     } catch (e) {
-      console.log("Failed to load categories", e);
+      console.error("Failed to load categories", e);
     }
   };
 
@@ -71,6 +72,7 @@ export default function AllTransactionsScreen({ navigation }) {
     pageNum,
     search = searchText,
     currentFilters = filters,
+    targetDate = selectedDate,
   ) => {
     if (loading && pageNum > 1) return;
     if (pageNum === 1) setLoading(true);
@@ -80,12 +82,26 @@ export default function AllTransactionsScreen({ navigation }) {
       if (search) params.search = search;
       if (currentFilters.categoryId)
         params.category_id = currentFilters.categoryId;
-      if (currentFilters.startDate)
-        params.start_date = currentFilters.startDate
-          .toISOString()
-          .split("T")[0];
-      if (currentFilters.endDate)
-        params.end_date = currentFilters.endDate.toISOString().split("T")[0];
+
+      let sDate = currentFilters.startDate;
+      let eDate = currentFilters.endDate;
+
+      // If no explicit filter dates, use the selected month
+      if (!sDate && !eDate && targetDate) {
+        sDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+        eDate = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth() + 1,
+          0,
+        );
+      }
+
+      if (sDate) {
+        params.start_date = `${sDate.getFullYear()}-${String(sDate.getMonth() + 1).padStart(2, "0")}-${String(sDate.getDate()).padStart(2, "0")}`;
+      }
+      if (eDate) {
+        params.end_date = `${eDate.getFullYear()}-${String(eDate.getMonth() + 1).padStart(2, "0")}-${String(eDate.getDate()).padStart(2, "0")}`;
+      }
 
       const data = await TransactionService.getAll(params);
 
@@ -102,7 +118,7 @@ export default function AllTransactionsScreen({ navigation }) {
       setHasMore(currentPage < lastPage);
       setPage(pageNum);
     } catch (error) {
-      console.log("Error loading transactions", error);
+      console.error("Error loading transactions", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -139,7 +155,7 @@ export default function AllTransactionsScreen({ navigation }) {
   const applyFilters = () => {
     setFilters(tempFilters);
     setShowFilterModal(false);
-    loadTransactions(1, searchText, tempFilters);
+    loadTransactions(1, searchText, tempFilters, selectedDate);
   };
 
   const resetFilters = () => {
@@ -147,7 +163,54 @@ export default function AllTransactionsScreen({ navigation }) {
     setTempFilters(resetState);
     setFilters(resetState);
     setShowFilterModal(false);
-    loadTransactions(1, searchText, resetState);
+    loadTransactions(1, searchText, resetState, selectedDate);
+  };
+
+  const startNewMonth = () => {
+    const now = new Date();
+    const resetState = { categoryId: null, startDate: null, endDate: null };
+
+    // Start a clean monthly view only. Historical records remain untouched.
+    setSearchText("");
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+      setSearchTimer(null);
+    }
+    setSelectedDate(now);
+    setTempFilters(resetState);
+    setFilters(resetState);
+    setShowFilterModal(false);
+    loadTransactions(1, "", resetState, now);
+  };
+
+  const confirmStartNewMonth = () => {
+    Alert.alert(
+      "Start New Month",
+      "This will reset filters and move you to the current month. Your transaction history will not be deleted.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Start", onPress: startNewMonth },
+      ],
+    );
+  };
+
+  const changeMonth = (delta) => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    setSelectedDate(newDate);
+    // Explicitly clear date filters when changing month to avoid confusion
+    if (filters.startDate || filters.endDate) {
+      setFilters((prev) => ({ ...prev, startDate: null, endDate: null }));
+      setTempFilters((prev) => ({ ...prev, startDate: null, endDate: null }));
+      loadTransactions(
+        1,
+        searchText,
+        { ...filters, startDate: null, endDate: null },
+        newDate,
+      );
+    } else {
+      loadTransactions(1, searchText, filters, newDate);
+    }
   };
 
   const onDateChange = (event, selectedDate, type) => {
@@ -257,6 +320,42 @@ export default function AllTransactionsScreen({ navigation }) {
       height: "100%",
       fontSize: 16,
       color: colors.text,
+    },
+    monthSelector: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 20,
+      marginBottom: 10,
+    },
+    monthBtn: {
+      padding: 8,
+      borderRadius: 12,
+      backgroundColor: colors.card,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    monthText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: colors.text,
+    },
+    startMonthBtn: {
+      marginHorizontal: 20,
+      marginBottom: 10,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    startMonthBtnText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 14,
     },
     modalOverlay: {
       flex: 1,
@@ -383,7 +482,7 @@ export default function AllTransactionsScreen({ navigation }) {
                   : colors.textSecondary
               }
             />
-            {(filters.categoryId || filters.startDate) && (
+            {!!(filters.categoryId || filters.startDate) && (
               <View
                 style={{
                   position: "absolute",
@@ -401,6 +500,53 @@ export default function AllTransactionsScreen({ navigation }) {
           </View>
         </TouchableOpacity>
       </View>
+
+      {/* Month Selector Component */}
+      <View style={styles.monthSelector}>
+        <TouchableOpacity
+          onPress={() => changeMonth(-1)}
+          style={styles.monthBtn}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+        <Text style={styles.monthText}>
+          {selectedDate.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+          })}
+        </Text>
+        <TouchableOpacity
+          onPress={() => changeMonth(1)}
+          style={styles.monthBtn}
+          disabled={
+            selectedDate.getMonth() === new Date().getMonth() &&
+            selectedDate.getFullYear() === new Date().getFullYear()
+          }
+        >
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={colors.textSecondary}
+            style={{
+              opacity:
+                selectedDate.getMonth() === new Date().getMonth() &&
+                selectedDate.getFullYear() === new Date().getFullYear()
+                  ? 0.3
+                  : 1,
+            }}
+          />
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity
+        style={styles.startMonthBtn}
+        onPress={confirmStartNewMonth}
+      >
+        <Text style={styles.startMonthBtnText}>Start New Month</Text>
+      </TouchableOpacity>
 
       <FlatList
         data={transactions}
@@ -647,7 +793,7 @@ export default function AllTransactionsScreen({ navigation }) {
                 onPress={resetFilters}
               >
                 <Text style={{ color: colors.text, fontWeight: "bold" }}>
-                  Reset
+                  Reset Filters
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity

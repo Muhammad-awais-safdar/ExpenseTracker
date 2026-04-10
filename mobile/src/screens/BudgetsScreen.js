@@ -19,7 +19,7 @@ export default function BudgetsScreen({ navigation }) {
   const loadBudgets = async () => {
     try {
       const data = await BudgetService.getAll();
-      setBudgets(data);
+      setBudgets(Array.isArray(data?.data) ? data.data : (data || []));
     } catch (error) {
       console.error(error);
     } finally {

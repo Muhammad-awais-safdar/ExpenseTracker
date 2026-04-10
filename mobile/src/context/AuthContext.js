@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       setIsBiometricEnabled(true);
       return true;
     } catch (e) {
-      console.log("Error enabling biometrics", e);
+      console.error("Error enabling biometrics", e);
       throw e;
     }
   };
@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Biometric authentication failed");
       }
     } catch (e) {
-      console.log("Biometric login error", e);
+      console.error("Biometric login error", e);
       throw e;
     }
   };
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       return user;
     } catch (error) {
-      console.log("Login error", error.response?.data || error.message);
+      console.error("Login error", error.response?.data || error.message);
       throw error;
     }
   };
@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       return user;
     } catch (error) {
-      console.log("Register error", error.response?.data || error.message);
+      console.error("Register error", error.response?.data || error.message);
       throw error;
     }
   };
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await AuthService.logout();
     } catch (e) {
-      console.log("Logout error", e);
+      console.error("Logout error", e);
     }
 
     await SecureStore.deleteItemAsync("token");
@@ -166,6 +166,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
     MemoryCache.clear();
+  };
+
+  const updateUser = async (updater) => {
+    setUser((prev) => {
+      const nextUser =
+        typeof updater === "function" ? updater(prev || {}) : updater;
+
+      AsyncStorage.setItem("user", JSON.stringify(nextUser)).catch((e) => {
+        console.error("Failed to persist updated user", e);
+      });
+
+      return nextUser;
+    });
   };
 
   return (
@@ -182,6 +195,7 @@ export const AuthProvider = ({ children }) => {
         enableBiometrics,
         disableBiometrics,
         loginWithBiometrics,
+        setUser: updateUser,
       }}
     >
       {children}

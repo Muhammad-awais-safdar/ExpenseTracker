@@ -22,7 +22,7 @@ export default function ExpensesScreen({ navigation }) {
   const loadExpenses = async () => {
     try {
       const data = await ExpenseService.getAll();
-      setExpenses(data.data);
+      setExpenses(Array.isArray(data?.data) ? data.data : (data || []));
     } catch (error) {
       console.error(error);
     } finally {

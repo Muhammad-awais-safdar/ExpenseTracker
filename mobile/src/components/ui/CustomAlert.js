@@ -8,6 +8,7 @@ import {
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function CustomAlert({
   visible,
@@ -19,6 +20,7 @@ export default function CustomAlert({
   cancelText = "Cancel",
   type = "info", // success, error, info, warning
 }) {
+  const { colors, isDarkMode } = useTheme();
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,6 +60,81 @@ export default function CustomAlert({
   };
 
   const theme = getColors();
+  const styles = StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    },
+    container: {
+      borderRadius: 24,
+      backgroundColor: colors.card,
+      padding: 24,
+      width: "85%",
+      maxWidth: 340,
+      alignItems: "center",
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    iconBox: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: colors.text,
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    message: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: "center",
+      marginBottom: 24,
+      lineHeight: 22,
+    },
+    btnRow: {
+      flexDirection: "row",
+      width: "100%",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    cancelBtn: {
+      flex: 1,
+      padding: 14,
+      borderRadius: 12,
+      backgroundColor: colors.inputBackground,
+      alignItems: "center",
+    },
+    cancelText: {
+      color: colors.text,
+      fontWeight: "600",
+      fontSize: 16,
+    },
+    confirmBtn: {
+      flex: 1,
+      padding: 14,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    confirmText: {
+      color: "#fff",
+      fontWeight: "600",
+      fontSize: 16,
+    },
+  });
 
   return (
     <Modal transparent visible={visible} animationType="fade">
@@ -97,79 +174,3 @@ export default function CustomAlert({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  container: {
-    borderRadius: 24,
-    backgroundColor: "#fff", // Fixed: Added background color
-    padding: 24,
-    width: "85%",
-    maxWidth: 340,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.05)",
-  },
-  iconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 16,
-    color: "#6B7280",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  btnRow: {
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  cancelBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-  },
-  cancelText: {
-    color: "#374151",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  confirmBtn: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  confirmText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-});

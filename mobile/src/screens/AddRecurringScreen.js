@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import RecurringService from "../services/recurringService";
+import { useTheme } from "../context/ThemeContext";
 
 export default function AddRecurringScreen({ navigation }) {
+  const { colors, isDarkMode } = useTheme();
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("expense");
@@ -41,7 +43,6 @@ export default function AddRecurringScreen({ navigation }) {
       Alert.alert("Success", "Recurring transaction created");
       navigation.goBack();
     } catch (error) {
-      console.log(error);
       Alert.alert("Error", "Failed to create rule");
     } finally {
       setLoading(false);
@@ -54,6 +55,83 @@ export default function AddRecurringScreen({ navigation }) {
   };
 
   const frequencies = ["daily", "weekly", "monthly", "yearly"];
+  const expenseChipColor = colors.danger;
+  const incomeChipColor = colors.success;
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    form: {
+      padding: 20,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 5,
+      marginTop: 15,
+    },
+    input: {
+      backgroundColor: colors.inputBackground,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      color: colors.text,
+    },
+    row: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginTop: 5,
+    },
+    chip: {
+      paddingHorizontal: 15,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: 10,
+      marginBottom: 10,
+      backgroundColor: colors.card,
+    },
+    activeFreqChip: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    chipText: {
+      color: colors.text,
+    },
+    activeChipText: {
+      color: "#fff",
+      fontWeight: "bold",
+    },
+    activeChip: {},
+    dateButton: {
+      padding: 12,
+      backgroundColor: colors.inputBackground,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+    },
+    dateText: {
+      color: colors.text,
+    },
+    button: {
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: "center",
+      marginTop: 30,
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -64,6 +142,7 @@ export default function AddRecurringScreen({ navigation }) {
           value={title}
           onChangeText={setTitle}
           placeholder="e.g. Netflix Subscription"
+          placeholderTextColor={colors.placeholder}
         />
 
         <Text style={styles.label}>Amount</Text>
@@ -72,6 +151,7 @@ export default function AddRecurringScreen({ navigation }) {
           value={amount}
           onChangeText={setAmount}
           placeholder="0.00"
+          placeholderTextColor={colors.placeholder}
           keyboardType="numeric"
         />
 
@@ -83,9 +163,12 @@ export default function AddRecurringScreen({ navigation }) {
               style={[
                 styles.chip,
                 type === t && styles.activeChip,
-                { borderColor: t === "expense" ? "#EF4444" : "#10B981" },
+                {
+                  borderColor: t === "expense" ? expenseChipColor : incomeChipColor,
+                },
                 type === t && {
-                  backgroundColor: t === "expense" ? "#EF4444" : "#10B981",
+                  backgroundColor:
+                    t === "expense" ? expenseChipColor : incomeChipColor,
                 },
               ]}
               onPress={() => setType(t)}
@@ -99,8 +182,8 @@ export default function AddRecurringScreen({ navigation }) {
                       type === t
                         ? "#fff"
                         : t === "expense"
-                          ? "#EF4444"
-                          : "#10B981",
+                          ? expenseChipColor
+                          : incomeChipColor,
                   },
                 ]}
               >
@@ -135,7 +218,7 @@ export default function AddRecurringScreen({ navigation }) {
           style={styles.dateButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <Text>{startDate.toLocaleDateString()}</Text>
+          <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
         </TouchableOpacity>
         {showDatePicker && (
           <DateTimePicker
@@ -143,6 +226,7 @@ export default function AddRecurringScreen({ navigation }) {
             mode="date"
             display="default"
             onChange={onDateChange}
+            themeVariant={isDarkMode ? "dark" : "light"}
           />
         )}
 
@@ -161,76 +245,3 @@ export default function AddRecurringScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  form: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 5,
-    marginTop: 15,
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  row: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 5,
-  },
-  chip: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginRight: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
-  },
-  activeFreqChip: {
-    backgroundColor: "#4F46E5",
-    borderColor: "#4F46E5",
-  },
-  chipText: {
-    color: "#374151",
-  },
-  activeChipText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  activeChip: {
-    // styles handled inline for dynamic colors or generic active class
-  },
-  dateButton: {
-    padding: 12,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-  },
-  button: {
-    backgroundColor: "#4F46E5",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 30,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});

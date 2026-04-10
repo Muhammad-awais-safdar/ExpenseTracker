@@ -46,7 +46,6 @@ export default function ChangePasswordScreen({ navigation }) {
       Alert.alert("Success", "Password updated successfully");
       navigation.goBack();
     } catch (error) {
-      console.log(error.response?.data);
       Alert.alert(
         "Error",
         error.response?.data?.message || "Failed to update password",

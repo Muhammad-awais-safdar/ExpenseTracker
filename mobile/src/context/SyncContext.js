@@ -6,6 +6,8 @@ import { Alert } from "react-native";
 import MemoryCache from "../utils/memoryCache";
 
 const SyncContext = createContext();
+const RETRY_BASE_MS = 30 * 1000;
+const RETRY_MAX_MS = 15 * 60 * 1000;
 
 export const SyncProvider = ({ children }) => {
   const [isOnline, setIsOnline] = useState(true);
@@ -80,29 +82,43 @@ export const SyncProvider = ({ children }) => {
     // Sort queue by timestamp to ensure correct order of operations
     queue.sort((a, b) => a.timestamp - b.timestamp);
 
+    const now = Date.now();
     for (const action of queue) {
+      if (action.next_retry_at && action.next_retry_at > now) {
+        failedItems.push(action);
+        continue;
+      }
       try {
         await processAction(action);
       } catch (error) {
         console.error("Sync failed for item", action, error);
+        const retryCount = Number(action.retry_count || 0) + 1;
+        const backoffMs = Math.min(RETRY_BASE_MS * 2 ** (retryCount - 1), RETRY_MAX_MS);
+
+        const enriched = {
+          ...action,
+          status: "failed",
+          retry_count: retryCount,
+          next_retry_at: Date.now() + backoffMs,
+          last_error:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to sync this action",
+          last_status_code: error?.response?.status || null,
+        };
 
         if (error.response?.status === 404) {
           // Only discard if we are SURE it's invalid. But for now, user wants to retry.
           // Maybe the backend was down or route changed.
           // We will keep it but log a warning.
-          console.warn(
-            "404 Error for action (Keeping in queue per user request):",
-            action,
-          );
-          failedItems.push(action);
+          failedItems.push(enriched);
         } else if (error.response?.status === 422) {
           // Validation error. Hard to retry without user edit.
           // We'll keep it for now so user doesn't lose data, but it will likely fail again.
-          console.warn("Validation Error for action:", action);
-          failedItems.push(action);
+          failedItems.push(enriched);
         } else {
           // All other errors (500, Network, etc) -> Keep
-          failedItems.push(action);
+          failedItems.push(enriched);
         }
       }
     }
@@ -116,6 +132,47 @@ export const SyncProvider = ({ children }) => {
     }
   };
 
+  const removeQueueItem = (id) => {
+    setOfflineQueue((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const clearQueue = () => {
+    setOfflineQueue([]);
+  };
+
+  const retryQueueItem = async (id) => {
+    const item = offlineQueue.find((q) => q.id === id);
+    if (!item) return false;
+
+    try {
+      await processAction(item);
+      setOfflineQueue((prev) => prev.filter((q) => q.id !== id));
+      MemoryCache.clear();
+      return true;
+    } catch (error) {
+      const retryCount = Number(item.retry_count || 0) + 1;
+      const backoffMs = Math.min(RETRY_BASE_MS * 2 ** (retryCount - 1), RETRY_MAX_MS);
+      setOfflineQueue((prev) =>
+        prev.map((q) =>
+          q.id === id
+            ? {
+                ...q,
+                status: "failed",
+                retry_count: retryCount,
+                next_retry_at: Date.now() + backoffMs,
+                last_error:
+                  error?.response?.data?.message ||
+                  error?.message ||
+                  "Failed to retry",
+                last_status_code: error?.response?.status || null,
+              }
+            : q,
+        ),
+      );
+      return false;
+    }
+  };
+
   const processAction = async (action) => {
     switch (action.type) {
       case "ADD_EXPENSE":
@@ -124,8 +181,10 @@ export const SyncProvider = ({ children }) => {
       case "ADD_INCOME":
         await api.post("/api/incomes", action.payload);
         break;
+      case "ADD_LOAN":
+        await api.post("/api/loans", action.payload);
+        break;
       case "ADD_TRANSACTION": // Legacy fallback
-        console.warn("Legacy ADD_TRANSACTION encountered", action);
         break;
       case "UPDATE_TRANSACTION":
         if (action.payload.type === "expense") {
@@ -142,14 +201,22 @@ export const SyncProvider = ({ children }) => {
         }
         break;
       default:
-        console.warn("Unknown offline action type:", action.type);
         throw new Error(`Unknown action type: ${action.type}`); // Throw so it counts as failu
     }
   };
 
   return (
     <SyncContext.Provider
-      value={{ isOnline, isSyncing, offlineQueue, addToQueue, syncNow }}
+      value={{
+        isOnline,
+        isSyncing,
+        offlineQueue,
+        addToQueue,
+        syncNow,
+        retryQueueItem,
+        removeQueueItem,
+        clearQueue,
+      }}
     >
       {children}
     </SyncContext.Provider>

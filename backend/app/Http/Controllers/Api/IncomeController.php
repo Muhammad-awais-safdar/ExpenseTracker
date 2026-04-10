@@ -37,6 +37,13 @@ class IncomeController extends Controller
             'source' => 'nullable|string',
             'date' => 'required|date',
         ]);
+        
+        if (!empty($validated['category_id'])) {
+            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+            if (!$ownsCategory) {
+                return response()->json(['message' => 'Invalid category selection.'], 422);
+            }
+        }
 
         $income = $request->user()->incomes()->create($validated);
         return response()->json($this->transformIncome($income->load('category')), 201);
@@ -62,6 +69,13 @@ class IncomeController extends Controller
             'source' => 'nullable|string',
             'date' => 'date',
         ]);
+        
+        if (array_key_exists('category_id', $validated) && !empty($validated['category_id'])) {
+            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+            if (!$ownsCategory) {
+                return response()->json(['message' => 'Invalid category selection.'], 422);
+            }
+        }
 
         $income->update($validated);
         return $this->transformIncome($income->load('category'));

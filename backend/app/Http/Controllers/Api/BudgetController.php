@@ -36,6 +36,11 @@ class BudgetController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
+        
+        $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+        if (!$ownsCategory) {
+            return response()->json(['message' => 'Invalid category selection.'], 422);
+        }
 
         $budget = $request->user()->budgets()->create($validated);
 
@@ -63,6 +68,13 @@ class BudgetController extends Controller
             'start_date' => 'date',
             'end_date' => 'date|after_or_equal:start_date',
         ]);
+        
+        if (array_key_exists('category_id', $validated)) {
+            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+            if (!$ownsCategory) {
+                return response()->json(['message' => 'Invalid category selection.'], 422);
+            }
+        }
 
         $budget->update($validated);
 

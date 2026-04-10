@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: expense-tracker-backend:latest
+    container_name: expense-tracker-backend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "php", "artisan", "about"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

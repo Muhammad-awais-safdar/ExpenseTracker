@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  SegmentedControlIOS,
 } from "react-native";
 import LoanService from "../services/loanService";
 import { useFocusEffect } from "@react-navigation/native";
@@ -23,7 +22,7 @@ export default function LoansScreen({ navigation }) {
   const loadLoans = async () => {
     try {
       const data = await LoanService.getAll();
-      setLoans(data);
+      setLoans(Array.isArray(data?.data) ? data.data : (data || []));
     } catch (error) {
       console.error(error);
     } finally {
@@ -225,10 +224,6 @@ export default function LoansScreen({ navigation }) {
                     },
                   ]}
                   onPress={() => {
-                    console.log(
-                      "[LoansScreen] Mark Paid Button Pressed for ID:",
-                      item.id,
-                    );
                     setAlertConfig({
                       visible: true,
                       title: "Settle Loan",
@@ -238,15 +233,12 @@ export default function LoansScreen({ navigation }) {
                       cancelText: "No",
                       onCancel: () => setAlertConfig({ visible: false }),
                       onConfirm: async () => {
-                        console.log("[LoansScreen] User confirmed settlement");
                         setAlertConfig({ visible: false });
                         setLoading(true);
                         try {
-                          console.log("[LoansScreen] Sending API request...");
-                          const result = await LoanService.update(item.id, {
+                          await LoanService.update(item.id, {
                             status: "paid",
                           }); // Send only status, strict
-                          console.log("[LoansScreen] API Success:", result);
                           await loadLoans(); // Await reload
                         } catch (e) {
                           console.error("[LoansScreen] API Failed:", e);

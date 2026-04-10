@@ -32,6 +32,13 @@ class RecurringTransactionController extends Controller
             'frequency' => 'required|in:daily,weekly,monthly,yearly',
             'start_date' => 'required|date',
         ]);
+        
+        if (!empty($validated['category_id'])) {
+            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+            if (!$ownsCategory) {
+                return response()->json(['message' => 'Invalid category selection.'], 422);
+            }
+        }
 
         $validated['user_id'] = $request->user()->id;
         $validated['next_run_date'] = $validated['start_date']; // Initial next run is start date if in future, typically logic might vary but let's assume it starts on start_date
@@ -75,6 +82,13 @@ class RecurringTransactionController extends Controller
             'start_date' => 'sometimes|date',
             'is_active' => 'sometimes|boolean',
         ]);
+        
+        if (array_key_exists('category_id', $validated) && !empty($validated['category_id'])) {
+            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
+            if (!$ownsCategory) {
+                return response()->json(['message' => 'Invalid category selection.'], 422);
+            }
+        }
         
         // If frequency or start_date changed, might need to re-calc next_run_date? 
         // For simplicity, if user edits, we just update fields. User can manually set next_run if needed or we keep it as is.
