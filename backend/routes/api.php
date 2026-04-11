@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::apiResource('expenses', ExpenseController::class);
     Route::apiResource('incomes', IncomeController::class);
+    Route::post('/categories/seed', [CategoryController::class, 'seed']);
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('loans', LoanController::class);
     Route::apiResource('budgets', BudgetController::class);

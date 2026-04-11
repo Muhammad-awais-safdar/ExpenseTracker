@@ -17,6 +17,10 @@ import { useReminders } from "../context/ReminderContext";
 import { usePinLock } from "../context/PinLockContext";
 import { Ionicons } from "@expo/vector-icons";
 import ExportService from "../services/exportService";
+import CategoryService from "../services/categoryService";
+import MemoryCache from "../utils/memoryCache";
+import { useToast } from "../context/ToastContext";
+import { getErrorMessage } from "../api/axios";
 
 export default function SettingsScreen({ navigation }) {
   const { isDarkMode, toggleTheme, colors } = useTheme();
@@ -34,6 +38,8 @@ export default function SettingsScreen({ navigation }) {
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [pin, setPin] = useState("");
   const { isPinEnabled, enablePin, disablePin } = usePinLock();
+  const { showToast } = useToast();
+  const [processing, setProcessing] = useState(false);
 
   const handleBiometricToggle = async (value) => {
     if (value) {
@@ -116,6 +122,49 @@ export default function SettingsScreen({ navigation }) {
     } catch (e) {
       Alert.alert("Error", "Failed to export transactions");
     }
+  };
+
+  const handleClearCache = () => {
+    Alert.alert(
+      "Clear Cache & Cookies",
+      "This will clear all temporary data. You will remain logged in, but data will be re-synced from the server. Proceed?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear Everything",
+          style: "destructive",
+          onPress: async () => {
+            await MemoryCache.clear();
+            showToast("Success", "Cache cleared successfully", "success");
+          },
+        },
+      ],
+    );
+  };
+
+  const handleRestoreCategories = () => {
+    Alert.alert(
+      "Restore Default Categories",
+      "This will add standard categories (Food, Travel, etc.) to your account if they are missing. Proceed?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Restore Defaults",
+          onPress: async () => {
+            try {
+              setProcessing(true);
+              await CategoryService.seed();
+              await MemoryCache.clear(); // Clear cache to force reload categories
+              showToast("Success", "Default categories restored!", "success");
+            } catch (error) {
+              showToast("Error", getErrorMessage(error), "error");
+            } finally {
+              setProcessing(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const menuItems = [
@@ -240,6 +289,18 @@ export default function SettingsScreen({ navigation }) {
               trackColor={{ false: "#767577", true: colors.warning }}
             />
           ),
+        },
+        {
+          label: "Restore Default Categories",
+          icon: "refresh-circle-outline",
+          action: handleRestoreCategories,
+          color: colors.success,
+        },
+        {
+          label: "Clear Cache and Cookies",
+          icon: "trash-outline",
+          action: handleClearCache,
+          color: colors.danger,
         },
         {
           label: "About",

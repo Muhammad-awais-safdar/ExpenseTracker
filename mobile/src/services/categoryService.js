@@ -30,6 +30,11 @@ const CategoryService = {
     await MemoryCache.set("categories_all", data);
     return data;
   },
+  
+  seed: async () => {
+    const response = await api.post("/api/categories/seed");
+    return response.data;
+  },
 
   create: async (data) => {
     const response = await api.post("/api/categories", data);

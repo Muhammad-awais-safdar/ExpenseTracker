@@ -69,6 +69,15 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
+    if (response.config.url.includes("/categories")) {
+      logger.info("DIAGNOSTIC", "📦 Category Response", {
+        status: response.status,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        count: Array.isArray(response.data) ? response.data.length : "N/A",
+        data: JSON.stringify(response.data).substring(0, 500) // Log snippet
+      });
+    }
     logger.info("API", `✅ ${response.status} ${response.config.url}`);
     return response;
   },

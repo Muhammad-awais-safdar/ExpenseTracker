@@ -16,7 +16,7 @@
     "preview_local": {
       "extends": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://voxelry.duckdns.org/expensetracker/",
+        "EXPO_PUBLIC_API_URL": "https://voxelry.duckdns.org/expensetracker",
         "EXPO_PUBLIC_APP_NAME": "ET-Local"
       }
     },

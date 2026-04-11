@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import IncomeService from "../services/incomeService";
 import CategoryService from "../services/categoryService";
 import { getErrorMessage } from "../api/axios";
@@ -157,10 +158,18 @@ export default function AddIncomeScreen({ navigation }) {
       <CustomDatePicker label="Date" value={date} onChange={setDate} />
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Category</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <Text style={styles.label}>Category</Text>
+          {categories.length === 0 && !loadingCats && (
+            <TouchableOpacity onPress={loadCategories} style={{ flexDirection: "row", alignItems: "center" }}>
+              <Ionicons name="refresh" size={14} color={colors.success} style={{ marginRight: 4 }} />
+              <Text style={{ color: colors.success, fontSize: 12, fontWeight: "600" }}>Refresh</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {loadingCats ? (
           <ActivityIndicator color={colors.success} />
-        ) : (
+        ) : categories.length > 0 ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -186,6 +195,10 @@ export default function AddIncomeScreen({ navigation }) {
               </TouchableOpacity>
             ))}
           </ScrollView>
+        ) : (
+          <View style={{ padding: 10, backgroundColor: colors.surface, borderRadius: 8, alignItems: "center" }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>No categories found. Tap refresh above.</Text>
+          </View>
         )}
       </View>
 
