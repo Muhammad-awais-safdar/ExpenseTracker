@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreExpenseRequest;
+use App\Http\Requests\Api\UpdateExpenseRequest;
 
 class ExpenseController extends Controller
 {
@@ -29,62 +31,41 @@ class ExpenseController extends Controller
         return $expenses;
     }
 
-    public function store(Request $request)
+    public function store(StoreExpenseRequest $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'amount' => 'required|numeric|min:0.01',
-            'description' => 'nullable|string',
-            'date' => 'required|date',
-        ]);
+        $validated = $request->validated();
         
-        if (!empty($validated['category_id'])) {
-            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
-            if (!$ownsCategory) {
-                return response()->json(['message' => 'Invalid category selection.'], 422);
-            }
-        }
-
         $expense = $request->user()->expenses()->create($validated);
-        return response()->json($this->transformExpense($expense->load('category')), 201);
+        
+        return response()->json(
+            $this->transformExpense($expense->load('category')), 
+            201
+        );
     }
 
     public function show(Request $request, Expense $expense)
     {
         if ($expense->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
         return $this->transformExpense($expense->load('category'));
     }
 
-    public function update(Request $request, Expense $expense)
+    public function update(UpdateExpenseRequest $request, Expense $expense)
     {
         if ($expense->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'amount' => 'numeric|min:0.01',
-            'description' => 'nullable|string',
-            'date' => 'date',
-        ]);
+        $expense->update($request->validated());
         
-        if (array_key_exists('category_id', $validated) && !empty($validated['category_id'])) {
-            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
-            if (!$ownsCategory) {
-                return response()->json(['message' => 'Invalid category selection.'], 422);
-            }
-        }
-
-        $expense->update($validated);
         return $this->transformExpense($expense->load('category'));
     }
 
     public function destroy(Request $request, Expense $expense)
     {
         if ($expense->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
         $expense->delete();

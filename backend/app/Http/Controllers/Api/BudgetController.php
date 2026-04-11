@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Budget;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreBudgetRequest;
+use App\Http\Requests\Api\UpdateBudgetRequest;
 
 class BudgetController extends Controller
 {
@@ -19,30 +21,17 @@ class BudgetController extends Controller
                 ->whereBetween('date', [$budget->start_date, $budget->end_date])
                 ->sum('amount');
             
-            $budget->spent = $spent;
+            $budget->spent = (float) $spent;
             $budget->percentage = $budget->amount > 0 ? min(100, round(($spent / $budget->amount) * 100)) : 0;
             return $budget;
         });
 
-        return $budgets;
+        return response()->json($budgets->values()->all());
     }
 
-    public function store(Request $request)
+    public function store(StoreBudgetRequest $request)
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'amount' => 'required|numeric|min:0.01',
-            'period' => 'required|in:monthly,yearly',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
-        
-        $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
-        if (!$ownsCategory) {
-            return response()->json(['message' => 'Invalid category selection.'], 422);
-        }
-
-        $budget = $request->user()->budgets()->create($validated);
+        $budget = $request->user()->budgets()->create($request->validated());
 
         return response()->json($budget->load('category'), 201);
     }
@@ -50,33 +39,18 @@ class BudgetController extends Controller
     public function show(Request $request, Budget $budget)
     {
         if ($budget->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
         return $budget->load('category');
     }
 
-    public function update(Request $request, Budget $budget)
+    public function update(UpdateBudgetRequest $request, Budget $budget)
     {
         if ($budget->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
-        $validated = $request->validate([
-            'category_id' => 'exists:categories,id',
-            'amount' => 'numeric|min:0.01',
-            'period' => 'in:monthly,yearly',
-            'start_date' => 'date',
-            'end_date' => 'date|after_or_equal:start_date',
-        ]);
-        
-        if (array_key_exists('category_id', $validated)) {
-            $ownsCategory = $request->user()->categories()->where('id', $validated['category_id'])->exists();
-            if (!$ownsCategory) {
-                return response()->json(['message' => 'Invalid category selection.'], 422);
-            }
-        }
-
-        $budget->update($validated);
+        $budget->update($request->validated());
 
         return $budget->load('category');
     }
@@ -84,7 +58,7 @@ class BudgetController extends Controller
     public function destroy(Request $request, Budget $budget)
     {
         if ($budget->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
         $budget->delete();

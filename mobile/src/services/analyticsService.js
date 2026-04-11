@@ -7,11 +7,13 @@ const AnalyticsService = {
    * @param {Date} startDate Optional, for custom range
    * @param {Date} endDate Optional, for custom range
    */
-  getAnalytics: async (period = "month", startDate = null, endDate = null) => {
+  getAnalytics: async (period = "month", startDate = null, endDate = null, month = null, year = null) => {
     try {
       const params = { period };
       if (startDate) params.start_date = startDate.toISOString().split("T")[0];
       if (endDate) params.end_date = endDate.toISOString().split("T")[0];
+      if (month) params.month = month;
+      if (year) params.year = year;
 
       const response = await api.get("/api/analytics", { params });
       return response.data;

@@ -5,24 +5,20 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreCategoryRequest;
+use App\Http\Requests\Api\UpdateCategoryRequest;
 
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        return $request->user()->categories()->get();
+        $categories = $request->user()->categories()->get();
+        return response()->json($categories->values()->all());
     }
 
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:expense,income',
-            'icon' => 'nullable|string',
-            'color' => 'nullable|string',
-        ]);
-
-        $category = $request->user()->categories()->create($validated);
+        $category = $request->user()->categories()->create($request->validated());
 
         return response()->json($category, 201);
     }
@@ -30,25 +26,18 @@ class CategoryController extends Controller
     public function show(Request $request, Category $category)
     {
         if ($category->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
         return $category;
     }
 
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
         if ($category->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'string|max:255',
-            'type' => 'in:expense,income',
-            'icon' => 'nullable|string',
-            'color' => 'nullable|string',
-        ]);
-
-        $category->update($validated);
+        $category->update($request->validated());
 
         return $category;
     }
@@ -56,7 +45,7 @@ class CategoryController extends Controller
     public function destroy(Request $request, Category $category)
     {
         if ($category->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
         $category->delete();

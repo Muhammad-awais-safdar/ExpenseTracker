@@ -7,25 +7,22 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\LoginRequest;
 
 class MobileAuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken($request->device_name)->plainTextToken;
 
         return response()->json([
             'user' => $user,
@@ -33,39 +30,17 @@ class MobileAuthController extends Controller
         ]);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $start = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Login Start: $start");
-
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-        
-        $validated = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Login Validated: " . ($validated - $start));
-
         if (!Auth::attempt($request->only('email', 'password'))) {
-            \Illuminate\Support\Facades\Log::info("Login Failed Auth: " . (microtime(true) - $validated));
             return response()->json([
-                'message' => 'Invalid login details'
+                'message' => 'Invalid credentials provided.'
             ], 401);
         }
 
-        $authed = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Login Auth Success: " . ($authed - $validated));
-
         $user = User::where('email', $request->email)->firstOrFail();
         
-        $userFetched = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Login User Fetched: " . ($userFetched - $authed));
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        $tokenCreated = microtime(true);
-        \Illuminate\Support\Facades\Log::info("Login Token Created: " . ($tokenCreated - $userFetched));
-        \Illuminate\Support\Facades\Log::info("Login Total: " . ($tokenCreated - $start));
+        $token = $user->createToken($request->device_name ?? 'auth_token')->plainTextToken;
 
         return response()->json([
             'user' => $user,
@@ -77,6 +52,6 @@ class MobileAuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out']);
+        return response()->json(['message' => 'Logged out successfully.']);
     }
 }

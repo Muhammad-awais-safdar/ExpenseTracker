@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "expense-tracker-api-v2",
-    "name": "Expense Tracker API (Backend v2)",
-    "description": "Deeply analyzed and aligned with current Laravel routes/controllers. Covers public auth, protected resources, profile, dashboard, analytics, export, and recurring APIs.",
+    "name": "Expense Tracker API (Production)",
+    "description": "Premium API Collection for the Expense Tracker Laravel project. Fully aligned with routes and controllers. Includes automated token management and resource ID syncing.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -52,6 +52,20 @@
       "type": "string"
     }
   ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({key: 'Accept', value: 'application/json'});",
+          "if (pm.request.method !== 'GET') {",
+          "    pm.request.headers.add({key: 'Content-Type', value: 'application/json'});",
+          "}"
+        ]
+      }
+    }
+  ],
   "auth": {
     "type": "bearer",
     "bearer": [
@@ -68,15 +82,23 @@
       "item": [
         {
           "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Health status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{base_url}}/health"
-            }
+            "url": { "raw": "{{base_url}}/health" }
           }
         }
       ]
@@ -99,32 +121,15 @@
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{base_url}}/mobile/register"
-            }
+            "url": { "raw": "{{base_url}}/mobile/register" }
           }
         },
         {
@@ -142,62 +147,56 @@
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Password123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
-            "url": {
-              "raw": "{{base_url}}/mobile/login"
-            }
+            "url": { "raw": "{{base_url}}/mobile/login" }
           }
         },
         {
           "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token', '');"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/mobile/logout"
-            }
+            "header": [],
+            "url": { "raw": "{{base_url}}/mobile/logout" }
           }
         },
         {
           "name": "Get Auth User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "if (data.id) { pm.collectionVariables.set('user_id', data.id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/user"
-            }
+            "header": [],
+            "url": { "raw": "{{base_url}}/user" }
           }
         }
       ]
@@ -242,20 +241,45 @@
       "item": [
         {
           "name": "List Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "const firstId = (data.data && data.data[0] && data.data[0].id) || (data[0] && data[0].id);",
+                  "if (firstId) { pm.collectionVariables.set('category_id', firstId); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [],
             "url": { "raw": "{{base_url}}/categories" }
           }
         },
         {
           "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "if (data.id) { pm.collectionVariables.set('category_id', data.id); }",
+                  "else if (data.data && data.data.id) { pm.collectionVariables.set('category_id', data.data.id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Food\",\n  \"type\": \"expense\",\n  \"icon\": \"restaurant-outline\",\n  \"color\": \"#EF4444\"\n}",
@@ -311,12 +335,23 @@
         },
         {
           "name": "Create Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "const id = data.id || (data.data && data.data.id);",
+                  "if (id) { pm.collectionVariables.set('expense_id', id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"category_id\": {{category_id}},\n  \"amount\": 1500,\n  \"description\": \"Groceries\",\n  \"date\": \"2026-04-10\"\n}",
@@ -372,12 +407,23 @@
         },
         {
           "name": "Create Income",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "const id = data.id || (data.data && data.data.id);",
+                  "if (id) { pm.collectionVariables.set('income_id', id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"category_id\": {{category_id}},\n  \"amount\": 45000,\n  \"source\": \"Salary\",\n  \"date\": \"2026-04-01\"\n}",
@@ -433,12 +479,23 @@
         },
         {
           "name": "Create Loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "const id = data.id || (data.data && data.data.id);",
+                  "if (id) { pm.collectionVariables.set('loan_id', id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"person_name\": \"Ali\",\n  \"amount\": 5000,\n  \"type\": \"given\",\n  \"due_date\": \"2026-05-10\",\n  \"description\": \"Short term loan\"\n}",
@@ -494,12 +551,23 @@
         },
         {
           "name": "Create Budget",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "const id = data.id || (data.data && data.data.id);",
+                  "if (id) { pm.collectionVariables.set('budget_id', id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"category_id\": {{category_id}},\n  \"amount\": 20000,\n  \"period\": \"monthly\",\n  \"start_date\": \"2026-04-01\",\n  \"end_date\": \"2026-04-30\"\n}",
@@ -555,12 +623,23 @@
         },
         {
           "name": "Create Recurring",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const data = pm.response.json();",
+                  "const id = data.id || (data.data && data.data.id);",
+                  "if (id) { pm.collectionVariables.set('recurring_id', id); }"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"type\": \"expense\",\n  \"amount\": 2500,\n  \"title\": \"Internet Bill\",\n  \"category_id\": {{category_id}},\n  \"frequency\": \"monthly\",\n  \"start_date\": \"2026-04-10\"\n}",
@@ -608,9 +687,20 @@
       "item": [
         {
           "name": "List Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [],
             "url": {
               "raw": "{{base_url}}/transactions?page=1&per_page=20&search=&category_id=&start_date=&end_date="
             }
@@ -618,9 +708,20 @@
         },
         {
           "name": "Delete Transaction By Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [],
             "url": {
               "raw": "{{base_url}}/transactions/{{transaction_id}}?type=expense"
             }
@@ -657,12 +758,20 @@
         },
         {
           "name": "Update Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Accept", "value": "application/json" }
-            ],
+            "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"current_password\": \"Password123!\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\"\n}",
@@ -678,17 +787,39 @@
       "item": [
         {
           "name": "Get Analytics (Month)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [],
             "url": { "raw": "{{base_url}}/analytics?period=month" }
           }
         },
         {
           "name": "Get Analytics (Custom)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
+            "header": [],
             "url": {
               "raw": "{{base_url}}/analytics?period=custom&start_date=2026-04-01&end_date=2026-04-10"
             }
@@ -701,6 +832,17 @@
       "item": [
         {
           "name": "Export Transactions CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [{ "key": "Accept", "value": "text/csv" }],

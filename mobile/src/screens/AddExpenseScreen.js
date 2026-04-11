@@ -44,13 +44,15 @@ export default function AddExpenseScreen({ navigation }) {
       if (expenseCategories.length > 0)
         setSelectedCategory(expenseCategories[0].id);
     } catch (error) {
-      setAlertConfig({
-        visible: true,
-        title: "Error",
-        message: "Failed to load categories",
-        type: "error",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      if (error.response?.status !== 401) {
+        setAlertConfig({
+          visible: true,
+          title: "Error",
+          message: "Failed to load categories. Please check your connection.",
+          type: "error",
+          onConfirm: () => setAlertConfig({ visible: false }),
+        });
+      }
     } finally {
       setLoadingCats(false);
     }

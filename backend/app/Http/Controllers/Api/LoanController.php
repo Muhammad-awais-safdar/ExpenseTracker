@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Loan;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreLoanRequest;
+use App\Http\Requests\Api\UpdateLoanRequest;
 
 class LoanController extends Controller
 {
@@ -20,16 +22,9 @@ class LoanController extends Controller
         return $loans->map(fn($item) => $this->transformLoan($item));
     }
 
-    public function store(Request $request)
+    public function store(StoreLoanRequest $request)
     {
-        $validated = $request->validate([
-            'person_name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0.01',
-            'type' => 'required|in:given,taken',
-            'due_date' => 'nullable|date',
-            'status' => 'in:pending,paid',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $loan = $request->user()->loans()->create($validated);
 
@@ -58,25 +53,18 @@ class LoanController extends Controller
     public function show(Request $request, Loan $loan)
     {
         if ($loan->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
         return $this->transformLoan($loan);
     }
 
-    public function update(Request $request, Loan $loan)
+    public function update(UpdateLoanRequest $request, Loan $loan)
     {
         if ($loan->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
-        $validated = $request->validate([
-            'person_name' => 'string|max:255',
-            'amount' => 'numeric|min:0.01',
-            'type' => 'in:given,taken',
-            'due_date' => 'nullable|date',
-            'status' => 'in:pending,paid',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Check if status is changing to 'paid'
         $wasPending = $loan->status === 'pending';
@@ -91,7 +79,7 @@ class LoanController extends Controller
                     'amount' => $loan->amount,
                     'source' => 'Loan Repayment: ' . $loan->person_name,
                     'date' => now(),
-                    'category_id' => null // Or create a specific category if needed
+                    'category_id' => null
                 ]);
             } else {
                 // I borrowed money, now paying it back -> Expense
@@ -110,7 +98,7 @@ class LoanController extends Controller
     public function destroy(Request $request, Loan $loan)
     {
         if ($loan->user_id !== $request->user()->id) {
-            abort(403);
+            return response()->json(['message' => 'The requested resource was not found or is unauthorized.'], 404);
         }
 
         $loan->delete();

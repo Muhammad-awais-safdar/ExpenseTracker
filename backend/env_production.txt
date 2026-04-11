@@ -2,7 +2,7 @@ APP_NAME=ExpenseTracker
 APP_ENV=production
 APP_KEY=base64:uyvM+O5usmTRGdOAjidMTwuy3fqDUB6/qzmT3QKtm80=
 APP_DEBUG=false
-APP_URL=https://expense-backend-tnag.onrender.com
+APP_URL=https://voxelry.duckdns.org/expensetracker
 
 LOG_CHANNEL=stderr
 LOG_DEPRECATIONS_CHANNEL=null

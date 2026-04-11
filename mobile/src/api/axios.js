@@ -1,12 +1,13 @@
 import axios from "axios";
 import { Alert } from "react-native";
+import logger from "../utils/logger";
 
 const API_URL =
-  process.env.API_URL || "https://expense-backend-tnag.onrender.com"; // Fallback ifenv fails
+  process.env.EXPO_PUBLIC_API_URL || "https://voxelry.duckdns.org/expensetracker";
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 60000, // 60 seconds (Render Free Tier Cold Start)
+  // timeout: 60000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -16,9 +17,14 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
+    logger.info("API", `🚀 ${config.method.toUpperCase()} ${config.url}`, {
+      params: config.params,
+      data: logger.mask(config.data),
+    });
     return config;
   },
   (error) => {
+    logger.error("API", "❌ Request Setup Error", error);
     return Promise.reject(error);
   },
 );
@@ -33,11 +39,25 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
+    logger.info("API", `✅ ${response.status} ${response.config.url}`, {
+      count: Array.isArray(response.data)
+        ? response.data.length
+        : response.data.data
+          ? response.data.data.length
+          : 1,
+    });
     return response;
   },
   (error) => {
+    const status = error.response ? error.response.status : "NETWORK_ERR";
+    const url = error.config ? error.config.url : "unknown";
+
+    logger.error("API", `❌ ${status} ${url}`, {
+      message: error.message,
+      responseData: error.response ? error.response.data : null,
+    });
+
     if (!error.response) {
-      // Network Error or Server Down
       Alert.alert(
         "Connection Error",
         "Could not connect to the server. Please check your internet connection.",
@@ -45,19 +65,20 @@ api.interceptors.response.use(
     }
 
     if (error.response) {
-      // Handle 401 Unauthorized globally
-      if (error.response.status === 401 && onUnauthorized) {
-        // Prevent global logout loop when explicitly logging in/registering
+      if (error.response.status === 401) {
         const isAuthRequest =
           error.config.url.includes("/login") ||
           error.config.url.includes("/register");
 
-        if (!isAuthRequest) {
+        if (!isAuthRequest && onUnauthorized) {
+          logger.warn(
+            "AUTH",
+            "Unauthorized access detected. Triggering session cleanup.",
+          );
           onUnauthorized();
         }
       }
     }
-    // Always reject
     return Promise.reject(error);
   },
 );

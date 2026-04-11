@@ -4,24 +4,31 @@ import MemoryCache from "../utils/memoryCache";
 
 const CategoryService = {
   getAll: async () => {
-    // Return cached if available (Stale)
-    const cached = MemoryCache.getStale("categories_all");
-    if (cached) return cached;
-
-    // Fetch fresh
-    const response = await api.get("/api/categories");
-    const data = response.data;
-
-    // Update Cache
-    await MemoryCache.set("categories_all", data);
-    return data;
+    try {
+      // 1. Try to fetch fresh data first if online
+      const response = await api.get("/api/categories");
+      const data = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      
+      // Update cache with fresh data
+      await MemoryCache.set("categories_all", data);
+      return data;
+    } catch (error) {
+      // 2. Fallback to stale cache only on network failure
+      const cached = MemoryCache.getStale("categories_all");
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        console.log("[CategoryService] Network failed, using stale cache");
+        return cached;
+      }
+      throw error; // If no cache and no network, rethrow
+    }
   },
 
   // Force refresh method
   refresh: async () => {
     const response = await api.get("/api/categories");
-    await MemoryCache.set("categories_all", response.data);
-    return response.data;
+    const data = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+    await MemoryCache.set("categories_all", data);
+    return data;
   },
 
   create: async (data) => {

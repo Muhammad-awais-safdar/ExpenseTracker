@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/axios";
 import { Alert } from "react-native";
 import MemoryCache from "../utils/memoryCache";
+import logger from "../utils/logger";
 
 const SyncContext = createContext();
 const RETRY_BASE_MS = 30 * 1000;
@@ -33,9 +34,13 @@ export const SyncProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const online = state.isConnected && state.isInternetReachable !== false;
+      if (online !== isOnline) {
+        logger.info("SYNC", `Network status changed: ${online ? "ONLINE" : "OFFLINE"}`);
+      }
       setIsOnline(online);
 
       if (online && offlineQueue.length > 0 && !isSyncing) {
+        logger.info("SYNC", "Device online, triggering automatic sync");
         syncNow();
       }
     });
@@ -65,6 +70,7 @@ export const SyncProvider = ({ children }) => {
       timestamp: Date.now(),
       status: "pending", // pending, syncing, failed
     };
+    logger.info("SYNC", `Action added to offline queue: ${action.type}`, { action: newAction });
     setOfflineQueue((prev) => [...prev, newAction]);
     Alert.alert(
       "Offline",
@@ -75,6 +81,7 @@ export const SyncProvider = ({ children }) => {
   const syncNow = async () => {
     if (isSyncing || offlineQueue.length === 0 || !isOnline) return;
 
+    logger.info("SYNC", `Starting synchronization of ${offlineQueue.length} items`);
     setIsSyncing(true);
     const queue = [...offlineQueue];
     const failedItems = [];
@@ -127,8 +134,11 @@ export const SyncProvider = ({ children }) => {
     setIsSyncing(false);
 
     if (failedItems.length === 0 && queue.length > 0) {
+      logger.info("SYNC", "Synchronization completed successfully");
       MemoryCache.clear(); // Clear cache so UI fetches fresh data
       Alert.alert("Sync Complete", "All offline actions have been synced.");
+    } else if (failedItems.length > 0) {
+      logger.warn("SYNC", "Synchronization finished with some failures", { failedCount: failedItems.length });
     }
   };
 

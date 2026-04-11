@@ -41,13 +41,15 @@ export default function AddIncomeScreen({ navigation }) {
       if (incomeCategories.length > 0)
         setSelectedCategory(incomeCategories[0].id);
     } catch (error) {
-      setAlertConfig({
-        visible: true,
-        title: "Error",
-        message: "Failed to load categories",
-        type: "error",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      if (error.response?.status !== 401) {
+        setAlertConfig({
+          visible: true,
+          title: "Error",
+          message: "Failed to load categories. Please check your connection.",
+          type: "error",
+          onConfirm: () => setAlertConfig({ visible: false }),
+        });
+      }
     } finally {
       setLoadingCats(false);
     }

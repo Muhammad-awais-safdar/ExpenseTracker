@@ -10,7 +10,21 @@ const ReminderContext = createContext({});
 const REMINDERS_ENABLED_KEY = "reminders_enabled";
 const REMINDER_SEEN_PREFIX = "reminder_seen_";
 
-const toList = (data) => (Array.isArray(data?.data) ? data.data : (data || []));
+const toList = (data) => {
+  if (!data) return [];
+  // Handle paginated structure: { data: [...] }
+  if (Array.isArray(data.data)) return data.data;
+  // Handle standard array
+  if (Array.isArray(data)) return data;
+  // Handle object with numeric keys (common in some key-preserved JSON conversions)
+  if (typeof data === "object") {
+    const keys = Object.keys(data);
+    if (keys.length > 0 && keys.every((k) => !isNaN(k))) {
+      return Object.values(data);
+    }
+  }
+  return [];
+};
 
 const isDueTodayOrTomorrow = (dateText) => {
   if (!dateText) return false;

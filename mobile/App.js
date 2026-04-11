@@ -8,9 +8,11 @@ import { ReminderProvider } from "./src/context/ReminderContext";
 import { PinLockProvider } from "./src/context/PinLockContext";
 import AppNavigator from "./src/navigation/AppNavigator";
 import MemoryCache from "./src/utils/memoryCache";
+import logger from "./src/utils/logger";
 
 export default function App() {
   useEffect(() => {
+    logger.info("APP", "Application initialized and mounted");
     MemoryCache.init();
   }, []);
 

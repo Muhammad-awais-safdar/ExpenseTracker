@@ -102,7 +102,7 @@ php artisan serve
 A complete **Postman Collection** is included in the root directory:
 📄 [`postman_collection.json`](./postman_collection.json)
 
-**Base URL (Production):** `https://expense-backend-tnag.onrender.com/api`
+**Base URL (Production):** `https://voxelry.duckdns.org/expensetracker/api`
 
 ### Key Endpoints
 

@@ -92,13 +92,15 @@ export default function AddBudgetScreen({ navigation }) {
         },
       });
     } catch (error) {
-      setAlertConfig({
-        visible: true,
-        title: "Error",
-        message: "Failed to set budget. Please try again.",
-        type: "error",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      if (error.response?.status !== 401) {
+        setAlertConfig({
+          visible: true,
+          title: "Error",
+          message: "Failed to set budget. Please try again.",
+          type: "error",
+          onConfirm: () => setAlertConfig({ visible: false }),
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -152,7 +154,10 @@ export default function AddBudgetScreen({ navigation }) {
     chipText: { color: colors.text },
     selectedChipText: { color: "#fff" },
 
-    dateRow: { flexDirection: "row", justifyContent: "space-between" },
+    dateRow: {
+      flexDirection: "row",
+      paddingBottom: 20, // Add space at bottom of row instead of internal margins
+    },
   });
 
   return (
@@ -225,9 +230,9 @@ export default function AddBudgetScreen({ navigation }) {
       </ScrollView>
 
       <View style={styles.dateRow}>
-        <View style={{ flex: 1, marginRight: 5 }}>
+        <View style={{ flex: 1, marginRight: 10 }}>
+          <Text style={styles.label}>Start Date</Text>
           <CustomDatePicker
-            label="Start Date"
             value={startDate}
             onChange={(d) => {
               setStartDate(d);
@@ -235,16 +240,20 @@ export default function AddBudgetScreen({ navigation }) {
             }}
           />
         </View>
-        <View style={{ flex: 1, marginLeft: 5 }}>
+        <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={styles.label}>End Date</Text>
           <TextInput
             style={[
               styles.input,
-              { backgroundColor: colors.inputBackground, opacity: 0.7 },
+              { 
+                backgroundColor: colors.inputBackground, 
+                opacity: 0.7, 
+                paddingVertical: 15, // Match CustomDatePicker button padding
+                borderRadius: 12,    // Match CustomDatePicker border radius
+              },
             ]}
             value={endDate}
             editable={false}
-            placeholderTextColor={colors.placeholder}
           />
         </View>
       </View>

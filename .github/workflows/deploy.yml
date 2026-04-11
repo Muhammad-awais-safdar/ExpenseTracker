@@ -3,7 +3,7 @@ name: Deploy ExpenseTracker
 on:
   push:
     branches:
-      - main   # change if using another branch
+      - main # change if using another branch
 
 jobs:
   deploy:
@@ -53,6 +53,13 @@ jobs:
 
             echo "🛢️ Run migrations"
             php artisan migrate --force
+
+            echo "🌱 Run seed (only if not already seeded)"
+              if [ ! -f "storage/app/seeded.flag" ]; then
+                php artisan db:seed --force
+                mkdir -p storage/app
+                touch storage/app/seeded.flag
+              fi
 
             echo "⚙️ Laravel optimize"
             php artisan config:clear

@@ -9,7 +9,7 @@
         "buildType": "apk"
       },
       "env": {
-        "API_URL": "https://expense-backend-tnag.onrender.com",
+        "API_URL": "https://voxelry.duckdns.org/expensetracker",
         "APP_NAME": "ExpenseTrackerMobile"
       }
     },
@@ -18,7 +18,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "API_URL": "https://expense-backend-tnag.onrender.com",
+        "API_URL": "https://voxelry.duckdns.org/expensetracker",
         "APP_NAME": "ExpenseTrackerMobile"
       }
     }

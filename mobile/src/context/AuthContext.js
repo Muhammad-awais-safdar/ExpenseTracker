@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api, { setUnauthorizedCallback } from "../api/axios";
+import logger from "../utils/logger";
 import AuthService from "../services/authService";
 import MemoryCache from "../utils/memoryCache";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -31,12 +32,25 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleSessionExpiry = async () => {
-    await SecureStore.deleteItemAsync("token");
-    await AsyncStorage.removeItem("user");
+    logger.warn("AUTH", "Session expired or invalid. Clearing local state.");
+    
+    // 1. Clear State (triggers immediate re-render of AppNavigator)
     setToken(null);
     setUser(null);
+
+    // 2. Clear Persistence
+    try {
+      await Promise.all([
+        SecureStore.deleteItemAsync("token"),
+        AsyncStorage.removeItem("user"),
+        MemoryCache.clear()
+      ]);
+    } catch (e) {
+      logger.error("AUTH", "Failed to clear storage during expiry", e);
+    }
+
+    // 3. Clear headers
     delete api.defaults.headers.common["Authorization"];
-    MemoryCache.clear();
   };
 
   const loadStorageData = async () => {
@@ -53,12 +67,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (storedToken && storedUser) {
+        const userObj = JSON.parse(storedUser);
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        setUser(userObj);
         api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+        logger.info("AUTH", "Session restored", { email: userObj.email });
+      } else {
+        logger.debug("AUTH", "No stored session found");
       }
     } catch (e) {
-      console.error("Failed to load auth data", e);
+      logger.error("AUTH", "Failed to load storage data", e);
     } finally {
       setIsSplashLoading(false);
     }
@@ -113,40 +131,75 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    // Local loading is handled by the component
     try {
-      const { user, token } = await AuthService.login(email, password);
+      // 1. Clear any existing state before starting a new login
+      await handleSessionExpiry();
 
+      const result = await AuthService.login(email, password);
+
+      // 2. Validate response structure
+      if (!result || !result.token || !result.user) {
+        throw new Error("Invalid response from server. Missing credentials.");
+      }
+
+      const { user, token } = result;
+
+      // 3. Persist and update state
       await SecureStore.setItemAsync("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setToken(token);
       setUser(user);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      
+      // 4. Purge all cache to ensure new user gets fresh categories/dashboard
+      await MemoryCache.clear();
+      
+      logger.info("AUTH", "User logged in successfully", { email: user.email });
       return user;
     } catch (error) {
-      console.error("Login error", error.response?.data || error.message);
+      // 4. Ensure state is cleared on failure to prevent navigation leakage
+      await handleSessionExpiry();
+      logger.error("AUTH", "Login failed", error.response?.data || error.message);
       throw error;
     }
   };
 
   const register = async (name, email, password, password_confirmation) => {
     try {
-      const { user, token } = await AuthService.register(
+      // 1. Clear any existing state
+      await handleSessionExpiry();
+
+      const result = await AuthService.register(
         name,
         email,
         password,
         password_confirmation,
       );
 
+      // 2. Validate response
+      if (!result || !result.token || !result.user) {
+        throw new Error("Registration succeeded but no token was returned.");
+      }
+
+      const { user, token } = result;
+
+      // 3. Persist and update state
       await SecureStore.setItemAsync("token", token);
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       setToken(token);
       setUser(user);
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      
+      // 4. Purge all cache
+      await MemoryCache.clear();
+      
+      logger.info("AUTH", "User registered successfully", { email: user.email });
       return user;
     } catch (error) {
+      // 4. Ensure clean state on failure
+      await handleSessionExpiry();
       console.error("Register error", error.response?.data || error.message);
       throw error;
     }
@@ -155,9 +208,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     // Only logout logic
     try {
+      logger.info("AUTH", "Logging out user", { email: user?.email });
       await AuthService.logout();
     } catch (e) {
-      console.error("Logout error", e);
+      logger.error("AUTH", "Logout API error (clearing local session anyway)", e);
     }
 
     await SecureStore.deleteItemAsync("token");
@@ -166,6 +220,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     delete api.defaults.headers.common["Authorization"];
     MemoryCache.clear();
+    logger.debug("AUTH", "Local session cleared");
   };
 
   const updateUser = async (updater) => {

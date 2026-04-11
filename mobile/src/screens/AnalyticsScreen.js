@@ -84,6 +84,7 @@ export default function AnalyticsScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [period, setPeriod] = useState("month"); // day, week, month, year, custom
   const [data, setData] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Custom Date Range
   const [showStartDate, setShowStartDate] = useState(false);
@@ -98,12 +99,17 @@ export default function AnalyticsScreen({ navigation }) {
     { label: "Year", value: "year" },
   ];
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (targetDate = selectedDate) => {
     try {
+      const month = targetDate.getMonth() + 1;
+      const year = targetDate.getFullYear();
+      
       const result = await AnalyticsService.getAnalytics(
         period,
         period === "custom" ? startDate : null,
         period === "custom" ? endDate : null,
+        period === "month" || period === "year" ? month : null,
+        period === "month" || period === "year" ? year : null
       );
       setData(result);
     } catch (error) {
@@ -112,6 +118,14 @@ export default function AnalyticsScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const changeMonth = (delta) => {
+    const newDate = new Date(selectedDate);
+    newDate.setMonth(newDate.getMonth() + delta);
+    setSelectedDate(newDate);
+    setLoading(true);
+    fetchAnalytics(newDate);
   };
 
   useEffect(() => {
@@ -240,6 +254,32 @@ export default function AnalyticsScreen({ navigation }) {
           </TouchableOpacity>
         </ScrollView>
       </View>
+
+      {/* Month/Year Selector Component */}
+      {(period === "month" || period === "year") && (
+        <View style={styles.monthSelector}>
+          <TouchableOpacity onPress={() => changeMonth(period === "year" ? -12 : -1)} style={styles.monthBtn}>
+            <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={[styles.monthText, { color: colors.text }]}>
+            {period === "year" 
+              ? selectedDate.getFullYear() 
+              : selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </Text>
+          <TouchableOpacity 
+            onPress={() => changeMonth(period === "year" ? 12 : 1)} 
+            style={styles.monthBtn}
+            disabled={selectedDate.getFullYear() === new Date().getFullYear() && (period === "year" || selectedDate.getMonth() === new Date().getMonth())}
+          >
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={colors.textSecondary} 
+              style={{ opacity: (selectedDate.getMonth() === new Date().getMonth() && selectedDate.getFullYear() === new Date().getFullYear()) ? 0.3 : 1 }}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {period === "custom" && (
         <View style={styles.dateRange}>
@@ -516,6 +556,22 @@ const styles = StyleSheet.create({
   },
   periodParams: {
     height: 60,
+  },
+  monthSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 25,
+    marginBottom: 15,
+  },
+  monthBtn: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  monthText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   periodBtn: {
     paddingVertical: 8,

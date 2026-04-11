@@ -25,7 +25,7 @@ React Native (Expo) mobile application for personal expense tracking.
    ```
 
    Edit `.env` and set your API URL:
-   - **Production**: `API_URL=https://expense-backend-tnag.onrender.com`
+   - **Production**: `API_URL=https://voxelry.duckdns.org/expensetracker`
    - **Local Development**: `API_URL=http://localhost:8000`
    - **Android Emulator**: `API_URL=http://10.0.2.2:8000`
 
@@ -53,17 +53,17 @@ React Native (Expo) mobile application for personal expense tracking.
 
 ### Environment Variables
 
-| Variable   | Description          | Example                                     |
-| ---------- | -------------------- | ------------------------------------------- |
-| `API_URL`  | Backend API endpoint | `https://expense-backend-tnag.onrender.com` |
-| `APP_NAME` | Application name     | `ExpenseTrackerMobile`                      |
+| Variable   | Description          | Example                                      |
+| ---------- | -------------------- | -------------------------------------------- |
+| `API_URL`  | Backend API endpoint | `https://voxelry.duckdns.org/expensetracker` |
+| `APP_NAME` | Application name     | `ExpenseTrackerMobile`                       |
 
 ### Switching Between Environments
 
 **For Production:**
 
 ```env
-API_URL=https://expense-backend-tnag.onrender.com
+API_URL=https://voxelry.duckdns.org/expensetracker
 ```
 
 **For Local Development:**
