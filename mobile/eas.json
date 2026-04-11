@@ -9,8 +9,15 @@
         "buildType": "apk"
       },
       "env": {
-        "API_URL": "https://voxelry.duckdns.org/expensetracker",
-        "APP_NAME": "ExpenseTrackerMobile"
+        "EXPO_PUBLIC_API_URL": "https://voxelry.duckdns.org/expensetracker",
+        "EXPO_PUBLIC_APP_NAME": "ExpenseTracker"
+      }
+    },
+    "preview_local": {
+      "extends": "preview",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://voxelry.duckdns.org/expensetracker/",
+        "EXPO_PUBLIC_APP_NAME": "ET-Local"
       }
     },
     "production": {
@@ -18,8 +25,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "API_URL": "https://voxelry.duckdns.org/expensetracker",
-        "APP_NAME": "ExpenseTrackerMobile"
+        "EXPO_PUBLIC_API_URL": "https://voxelry.duckdns.org/expensetracker",
+        "EXPO_PUBLIC_APP_NAME": "ExpenseTracker"
       }
     }
   }

@@ -25,39 +25,54 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
             if ($request->is('api/*')) {
-                // 1. Validation Errors
+                $correlationId = bin2hex(random_bytes(8));
+
+                // 1. Custom API Exceptions (Business Logic)
+                if ($e instanceof \App\Exceptions\ApiException) {
+                    return response()->json([
+                        'message' => $e->getMessage(),
+                        'errors' => $e->getErrors(),
+                        'correlation_id' => $correlationId
+                    ], $e->getStatusCode());
+                }
+
+                // 2. Validation Errors
                 if ($e instanceof \Illuminate\Validation\ValidationException) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' => $e->errors(),
+                        'correlation_id' => $correlationId
                     ], 422);
                 }
 
-                // 2. Authentication Errors
+                // 3. Authentication Errors
                 if ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     return response()->json([
                         'message' => 'Unauthenticated session or token expired.',
+                        'correlation_id' => $correlationId
                     ], 401);
                 }
 
-                // 3. Resource Not Found
+                // 4. Resource Not Found
                 if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || 
                     $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
                     return response()->json([
                         'message' => 'The requested resource was not found.',
+                        'correlation_id' => $correlationId
                     ], 404);
                 }
 
-                // 4. Authorization Errors
-                if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException || 
-                    $e instanceof \Illuminate\Auth\AccessDeniedException) {
+                // 5. Database Errors
+                if ($e instanceof \Illuminate\Database\QueryException) {
+                    \Illuminate\Support\Facades\Log::critical("DB Error: {$e->getMessage()}", ['cid' => $correlationId]);
                     return response()->json([
-                        'message' => 'This action is unauthorized.',
-                    ], 403);
+                        'message' => 'A data processing error occurred.',
+                        'correlation_id' => $correlationId
+                    ], 500);
                 }
 
-                // 5. Global Logging for Critical Errors (500)
-                \Illuminate\Support\Facades\Log::error("API Error: [{$e->getCode()}] {$e->getMessage()}", [
+                // 6. Global Logging for Critical Errors (500)
+                \Illuminate\Support\Facades\Log::error("API Error [{$correlationId}]: [{$e->getCode()}] {$e->getMessage()}", [
                     'url' => $request->fullUrl(),
                     'method' => $request->method(),
                     'user_id' => auth()->id(),

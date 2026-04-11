@@ -12,9 +12,12 @@ import ExpenseService from "../services/expenseService";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
+import { getErrorMessage } from "../api/axios";
 
 export default function ExpensesScreen({ navigation }) {
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,7 +27,9 @@ export default function ExpensesScreen({ navigation }) {
       const data = await ExpenseService.getAll();
       setExpenses(Array.isArray(data?.data) ? data.data : (data || []));
     } catch (error) {
-      console.error(error);
+      if (error.response?.status !== 401) {
+        showToast("Error", getErrorMessage(error), "error");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

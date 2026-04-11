@@ -21,11 +21,14 @@ import { getValidIconName } from "../utils/iconMap";
 import { LinearGradient } from "expo-linear-gradient";
 import DashboardService from "../services/dashboardService";
 import MemoryCache from "../utils/memoryCache";
+import { getErrorMessage } from "../api/axios";
+import { useToast } from "../context/ToastContext";
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { reminders, refreshReminders, isReminderEnabled } = useReminders();
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
   const [dashboardData, setDashboardData] = useState(
     MemoryCache.getStale("dashboard") || null,
   );
@@ -60,9 +63,8 @@ export default function HomeScreen({ navigation }) {
       await MemoryCache.set(cacheKey, data);
       await MemoryCache.set("dashboard", data);
     } catch (error) {
-      console.error("[HomeScreen] Dashboard fetch error:", error);
-      if (error.response?.status === 401) {
-        logout(); // Force logout on 401
+      if (error.response?.status !== 401) {
+        showToast("Sync Error", getErrorMessage(error), "error");
       }
     } finally {
       if (mounted.current) {

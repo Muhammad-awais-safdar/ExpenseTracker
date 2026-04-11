@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
+import { getErrorMessage } from "../api/axios";
 import GradientBackground from "../components/ui/GradientBackground";
 import ModernButton from "../components/ui/ModernButton";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +23,7 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isBiometricEnabled, loginWithBiometrics } = useAuth();
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -77,6 +80,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setErrors({});
     if (!email || !password) {
+      showToast("Validation Error", "Please fill in all fields.", "error");
       setErrors({
         email: !email ? ["Email is required"] : null,
         password: !password ? ["Password is required"] : null,
@@ -87,17 +91,9 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (e) {
-      if (e.response?.status === 422) {
-        setErrors(e.response.data.errors);
-      } else if (e.response?.status === 401 || e.response?.status === 403) {
-        const msg = e.response.data?.message || "Invalid email or password";
-        setErrors({ general: [msg] });
-      } else {
-        const msg =
-          e.response?.data?.message || "An error occurred. Please try again.";
-        setErrors({ general: [msg] });
-      }
+      showToast("Welcome Back!", "Logged in successfully.", "success");
+    } catch (error) {
+      showToast("Login Failed", getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }

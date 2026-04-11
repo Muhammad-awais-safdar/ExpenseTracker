@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import IncomeService from "../services/incomeService";
 import CategoryService from "../services/categoryService";
+import { getErrorMessage } from "../api/axios";
+import { useToast } from "../context/ToastContext";
 import MemoryCache from "../utils/memoryCache";
 import { useSync } from "../context/SyncContext";
 import { useTheme } from "../context/ThemeContext";
@@ -26,8 +28,9 @@ export default function AddIncomeScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCats, setLoadingCats] = useState(true);
-  const { isOnline, addToQueue } = useSync();
+  const { isOnline, addToQueue, syncNow, isSyncing } = useSync();
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadCategories();
@@ -42,13 +45,7 @@ export default function AddIncomeScreen({ navigation }) {
         setSelectedCategory(incomeCategories[0].id);
     } catch (error) {
       if (error.response?.status !== 401) {
-        setAlertConfig({
-          visible: true,
-          title: "Error",
-          message: "Failed to load categories. Please check your connection.",
-          type: "error",
-          onConfirm: () => setAlertConfig({ visible: false }),
-        });
+        showToast("Error", getErrorMessage(error), "error");
       }
     } finally {
       setLoadingCats(false);
@@ -57,14 +54,7 @@ export default function AddIncomeScreen({ navigation }) {
 
   const handleSubmit = async () => {
     if (!amount || !selectedCategory) {
-      setAlertConfig({
-        visible: true,
-        title: "Missing Information",
-        message: "Please enter an amount and select a category.",
-        type: "warning",
-        confirmText: "Okay",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      showToast("Missing Information", "Please enter an amount and select a category.", "warning");
       return;
     }
 
@@ -80,17 +70,8 @@ export default function AddIncomeScreen({ navigation }) {
             category_id: selectedCategory,
           },
         });
-        setAlertConfig({
-          visible: true,
-          title: "Saved Offline",
-          message: "Income saved to offline queue. Will sync when online.",
-          type: "info",
-          confirmText: "Done",
-          onConfirm: () => {
-            setAlertConfig({ visible: false });
-            navigation.goBack();
-          },
-        });
+        showToast("Saved Offline", "Income saved to offline queue. Will sync when online.", "info");
+        navigation.goBack();
       } else {
         await IncomeService.create({
           amount: parseFloat(amount),
@@ -98,27 +79,11 @@ export default function AddIncomeScreen({ navigation }) {
           date,
           category_id: selectedCategory,
         });
-        // MemoryCache.clear();
-        setAlertConfig({
-          visible: true,
-          title: "Success",
-          message: "Income added successfully!",
-          type: "success",
-          confirmText: "Great",
-          onConfirm: () => {
-            setAlertConfig({ visible: false });
-            navigation.goBack();
-          },
-        });
+        showToast("Success", "Income recorded successfully!", "success");
+        navigation.goBack();
       }
     } catch (error) {
-      setAlertConfig({
-        visible: true,
-        title: "Error",
-        message: "Failed to add income. Please try again.",
-        type: "error",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      showToast("Error", getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }

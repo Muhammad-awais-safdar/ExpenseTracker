@@ -15,13 +15,15 @@ import { LineChart, PieChart } from "react-native-chart-kit";
 import AnalyticsService from "../services/analyticsService";
 import { getValidIconName } from "../utils/iconMap";
 import ExportService from "../services/exportService";
-import { Alert } from "react-native";
+import { useToast } from "../context/ToastContext";
+import { getErrorMessage } from "../api/axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const { width } = Dimensions.get("window");
 
 export default function AnalyticsScreen({ navigation }) {
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
 
   const handleExport = () => {
     Alert.alert("Export Report", "Choose a format", [
@@ -113,7 +115,9 @@ export default function AnalyticsScreen({ navigation }) {
       );
       setData(result);
     } catch (error) {
-      console.error("Failed to load analytics", error);
+      if (error.response?.status !== 401) {
+        showToast("Error", getErrorMessage(error), "error");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

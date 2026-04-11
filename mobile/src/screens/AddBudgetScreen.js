@@ -14,6 +14,8 @@ import CustomAlert from "../components/ui/CustomAlert";
 import ModernButton from "../components/ui/ModernButton";
 import CustomDatePicker from "../components/ui/CustomDatePicker";
 import { useTheme } from "../context/ThemeContext";
+import { getErrorMessage } from "../api/axios";
+import { useToast } from "../context/ToastContext";
 
 export default function AddBudgetScreen({ navigation }) {
   const [alertConfig, setAlertConfig] = useState({ visible: false });
@@ -27,6 +29,7 @@ export default function AddBudgetScreen({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(false);
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadCategories();
@@ -41,7 +44,9 @@ export default function AddBudgetScreen({ navigation }) {
       if (expenseCategories.length > 0)
         setSelectedCategory(expenseCategories[0].id);
     } catch (error) {
-      // alert("Error"); // Silent fail or retry
+      if (error.response?.status !== 401) {
+        showToast("Error", getErrorMessage(error), "error");
+      }
     }
   };
 
@@ -80,27 +85,10 @@ export default function AddBudgetScreen({ navigation }) {
         end_date: endDate,
       });
       MemoryCache.clear();
-      setAlertConfig({
-        visible: true,
-        title: "Budget Set",
-        message: "Your budget has been successfully created.",
-        type: "success",
-        confirmText: "Excellent",
-        onConfirm: () => {
-          setAlertConfig({ visible: false });
-          navigation.goBack();
-        },
-      });
+      showToast("Success", "Budget created successfully!", "success");
+      navigation.goBack();
     } catch (error) {
-      if (error.response?.status !== 401) {
-        setAlertConfig({
-          visible: true,
-          title: "Error",
-          message: "Failed to set budget. Please try again.",
-          type: "error",
-          onConfirm: () => setAlertConfig({ visible: false }),
-        });
-      }
+      showToast("Error", getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }

@@ -10,6 +10,9 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import MemoryCache from "./src/utils/memoryCache";
 import logger from "./src/utils/logger";
 
+import GlobalErrorBoundary from "./src/components/GlobalErrorBoundary";
+import { ToastProvider } from "./src/context/ToastContext";
+
 export default function App() {
   useEffect(() => {
     logger.info("APP", "Application initialized and mounted");
@@ -18,17 +21,21 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <SyncProvider>
-            <PinLockProvider>
-              <ReminderProvider>
-                <AppNavigator />
-              </ReminderProvider>
-            </PinLockProvider>
-          </SyncProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <GlobalErrorBoundary>
+        <ToastProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <SyncProvider>
+                <PinLockProvider>
+                  <ReminderProvider>
+                    <AppNavigator />
+                  </ReminderProvider>
+                </PinLockProvider>
+              </SyncProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </GlobalErrorBoundary>
     </SafeAreaProvider>
   );
 }

@@ -7,19 +7,49 @@ const API_URL =
 
 const api = axios.create({
   baseURL: API_URL,
-  // timeout: 60000,
+  timeout: 10000, // 10 seconds timeout
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
+// Helper to extract a friendly error message from Axios error
+export const getErrorMessage = (error) => {
+  if (!error.response) {
+    if (error.code === "ECONNABORTED") return "Request timed out. Please try again.";
+    return "Network error. Please check your connection.";
+  }
+
+  const { status, data } = error.response;
+
+  // 1. Validation Errors
+  if (status === 422 && data.errors) {
+    const firstError = Object.values(data.errors)[0];
+    return Array.isArray(firstError) ? firstError[0] : "Invalid input data.";
+  }
+
+  // 2. Custom API Exceptions
+  if (data.message) {
+    return data.message;
+  }
+
+  // 3. Fallbacks
+  switch (status) {
+    case 401: return "Session expired. Please log in again.";
+    case 403: return "You don't have permission for this action.";
+    case 404: return "The requested information was not found.";
+    case 429: return "Too many requests. Please slow down.";
+    case 500: return "Server error. We're working on it.";
+    default: return "An unexpected error occurred.";
+  }
+};
+
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
     logger.info("API", `🚀 ${config.method.toUpperCase()} ${config.url}`, {
       params: config.params,
-      data: logger.mask(config.data),
     });
     return config;
   },
@@ -39,13 +69,7 @@ export const setUnauthorizedCallback = (callback) => {
 // Add response interceptor
 api.interceptors.response.use(
   (response) => {
-    logger.info("API", `✅ ${response.status} ${response.config.url}`, {
-      count: Array.isArray(response.data)
-        ? response.data.length
-        : response.data.data
-          ? response.data.data.length
-          : 1,
-    });
+    logger.info("API", `✅ ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
@@ -54,27 +78,17 @@ api.interceptors.response.use(
 
     logger.error("API", `❌ ${status} ${url}`, {
       message: error.message,
+      readableMessage: getErrorMessage(error),
       responseData: error.response ? error.response.data : null,
     });
-
-    if (!error.response) {
-      Alert.alert(
-        "Connection Error",
-        "Could not connect to the server. Please check your internet connection.",
-      );
-    }
 
     if (error.response) {
       if (error.response.status === 401) {
         const isAuthRequest =
-          error.config.url.includes("/login") ||
-          error.config.url.includes("/register");
+          url.includes("/login") ||
+          url.includes("/register");
 
         if (!isAuthRequest && onUnauthorized) {
-          logger.warn(
-            "AUTH",
-            "Unauthorized access detected. Triggering session cleanup.",
-          );
           onUnauthorized();
         }
       }

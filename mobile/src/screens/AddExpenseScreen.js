@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import ExpenseService from "../services/expenseService";
 import CategoryService from "../services/categoryService";
+import { getErrorMessage } from "../api/axios";
+import { useToast } from "../context/ToastContext";
 import MemoryCache from "../utils/memoryCache";
 import { useSync } from "../context/SyncContext";
 import { useTheme } from "../context/ThemeContext";
@@ -31,6 +33,7 @@ export default function AddExpenseScreen({ navigation }) {
   const [loadingCats, setLoadingCats] = useState(true);
   const { isOnline, addToQueue, offlineQueue, syncNow, isSyncing } = useSync();
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadCategories();
@@ -45,13 +48,7 @@ export default function AddExpenseScreen({ navigation }) {
         setSelectedCategory(expenseCategories[0].id);
     } catch (error) {
       if (error.response?.status !== 401) {
-        setAlertConfig({
-          visible: true,
-          title: "Error",
-          message: "Failed to load categories. Please check your connection.",
-          type: "error",
-          onConfirm: () => setAlertConfig({ visible: false }),
-        });
+        showToast("Error", getErrorMessage(error), "error");
       }
     } finally {
       setLoadingCats(false);
@@ -101,27 +98,11 @@ export default function AddExpenseScreen({ navigation }) {
           date,
           category_id: selectedCategory,
         });
-        // MemoryCache.clear(); // Don't clear everything, let staleness handle it or specific invalidation
-        setAlertConfig({
-          visible: true,
-          title: "Success",
-          message: "Expense recorded successfully!",
-          type: "success",
-          confirmText: "Done",
-          onConfirm: () => {
-            setAlertConfig({ visible: false });
-            navigation.goBack();
-          },
-        });
+        showToast("Success", "Expense recorded successfully!", "success");
+        navigation.goBack();
       }
     } catch (error) {
-      setAlertConfig({
-        visible: true,
-        title: "Error",
-        message: "Failed to save expense. Please try again.",
-        type: "error",
-        onConfirm: () => setAlertConfig({ visible: false }),
-      });
+      showToast("Error", getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }

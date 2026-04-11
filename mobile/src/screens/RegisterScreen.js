@@ -11,6 +11,8 @@ import {
   Animated,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { getErrorMessage } from "../api/axios";
+import { useToast } from "../context/ToastContext";
 import { useTheme } from "../context/ThemeContext";
 import GradientBackground from "../components/ui/GradientBackground";
 import ModernButton from "../components/ui/ModernButton";
@@ -25,6 +27,7 @@ export default function RegisterScreen({ navigation }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register } = useAuth();
   const { colors, isDarkMode } = useTheme();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -68,14 +71,12 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       await register(name, email, password, passwordConfirmation);
-    } catch (e) {
-      if (e.response && e.response.status === 422) {
-        setErrors(e.response.data.errors);
-      } else {
-        const msg =
-          e.response?.data?.message || "An error occurred. Please try again.";
-        setErrors({ general: [msg] });
+      showToast("Account Created", "Welcome to Expense Tracker!", "success");
+    } catch (error) {
+      if (error.response && error.response.status === 422) {
+        setErrors(error.response.data.errors);
       }
+      showToast("Registration Failed", getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }
